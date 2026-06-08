@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企業員工打卡系統</title>
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 450px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            color: var(--text-main);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* 實時時鐘樣式 */
+        .clock-box {
+            text-align: center;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+        }
+
+        #current-date {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        #current-time {
+            font-size: 32px;
+            color: var(--primary-color);
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        /* 表單樣式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        /* 按鈕樣式 */
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1xl 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .btn {
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-checkin {
+            background-color: var(--success-color);
+        }
+
+        .btn-checkin:hover {
+            background-color: #059669;
+        }
+
+        .btn-checkout {
+            background-color: var(--danger-color);
+        }
+
+        .btn-checkout:hover {
+            background-color: #dc2626;
+        }
+
+        /* 歷史紀錄樣式 */
+        .record-section {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 20px;
+        }
+
+        .record-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .record-list {
+            max-height: 150px;
+            overflow-y: auto;
+            list-style: none;
+        }
+
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px dashed #e2e8f0;
+            font-size: 14px;
+        }
+
+        .record-item:last-child {
+            border-bottom: none;
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .badge-in { background-color: var(--success-color); }
+        .badge-out { background-color: var(--danger-color); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>雲端人事管理系統</h1>
+        <p>請輸入員編完成每日打卡</p>
+    </div>
+
+    <div class="clock-box">
+        <div id="current-date">載入中...</div>
+        <div id="current-time">00:00:00</div>
+    </div>
+
+    <div class="form-group">
+        <label for="employee-id">員工編號 / 姓名</label>
+        <input type="text" id="employee-id" placeholder="例如: EMP001" autocomplete="off">
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-checkin" onclick="handleClock('上班')">
+            🌅 上班打卡
+        </button>
+        <button class="btn btn-checkout" onclick="handleClock('下班')">
+            🌃 下班打卡
+        </button>
+    </div>
+
+    <div class="record-section">
+        <div class="record-title">本日臨時打卡紀錄 (本地暫存)</div>
+        <ul class="record-list" id="record-list">
+            </ul>
+    </div>
+</div>
+
+<script>
+    // 1. 更新時鐘功能
+    function updateClock() {
+        const now = new Date();
+        
+        // 格式化日期
+        const options = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        document.getElementById('current-date').innerText = now.toLocaleDateString('zh-TW', options);
+        
+        // 格式化時間
+        const timeString = now.toLocaleTimeString('zh-TW', { hour12: false });
+        document.getElementById('current-time').innerText = timeString;
+    }
+    
+    // 每秒更新一次時間
+    setInterval(updateClock, 1000);
+    updateClock(); // 初始化呼叫
+
+    // 2. 打卡動作處理
+    function handleClock(type) {
+        const empIdInput = document.getElementById('employee-id');
+        const empId = empIdInput.value.trim();
+
+        if (!empId) {
+            alert('請先輸入員工編號！');
+            empIdInput.focus();
+            return;
+        }
+
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('zh-TW', { hour12: false });
+        
+        // 彈出成功提示
+        alert(`【${type}成功】\n員工：${empId}\n時間：${timeString}`);
+
+        // 新增到前端顯示列表
+        addRecordToList(empId, type, timeString);
+
+        // 清空輸入框
+        empIdInput.value = '';
+    }
+
+    // 3. 將打卡紀錄渲染到畫面上
+    function addRecordToList(empId, type, time) {
+        const list = document.getElementById('record-list');
+        const li = document.createElement('li');
+        li.className = 'record-item';
+        
+        const badgeClass = type === '上班' ? 'badge-in' : 'badge-out';
+        
+        li.innerHTML = `
+            <span><strong>${empId}</strong></span>
+            <span>
+                <span class="badge ${badgeClass}">${type}</span>
+                <span style="margin-left: 8px; color: var(--text-muted);">${time}</span>
+            </span>
+        `;
+        
+        // 新紀錄插在最上方
+        list.insertBefore(li, list.firstChild);
+    }
+    function handleClock(type) {
+    const empIdInput = document.getElementById('employee-id');
+    const empId = empIdInput.value.trim();
+
+    if (!empId) {
+        alert('請先輸入員工編號！');
+        empIdInput.focus();
+        return;
+    }
+
+    const now = new Date();
+    const dateString = now.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    const timeString = now.toLocaleTimeString('zh-TW', { hour12: false });
+    
+    // 【核心改動】：將資料包裝成物件
+    const newRecord = {
+        empId: empId,
+        type: type,
+        date: dateString,
+        time: timeString
+    };
+
+    // 取出舊資料，塞入新資料，再存回去 LocalStorage
+    let records = JSON.parse(localStorage.getItem('clock_records')) || [];
+    records.push(newRecord);
+    localStorage.setItem('clock_records', JSON.stringify(records));
+
+    // 彈出成功提示
+    alert(`【${type}成功】\n員工：${empId}\n時間：${timeString}`);
+
+    // 更新前台畫面列表
+    addRecordToList(empId, type, timeString);
+    empIdInput.value = '';
+}
+</script>
+
+</body>
+</html>
