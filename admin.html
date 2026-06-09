@@ -198,7 +198,6 @@
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ 務必在此處正確換上你專案的 Firebase Config 設定金鑰
    const firebaseConfig = {
         apiKey: "AIzaSyDfTTRHfVCW-QpAPYuoDA4absfWO9OARcY", 
         authDomain: "youcheng-656a8.firebaseapp.com",
@@ -214,9 +213,11 @@
     const auth = getAuth(app);
     const db = getDatabase(app);
 
+    // 💡【重要設定】請確保這裡的檔名跟你的前台打卡系統 HTML 檔名一模一樣（注意大小寫）
+    const FRONTEND_PAGE = "index.html"; 
+
     let allMergedRecords = [];
 
-    // 關閉遮罩的輔助函式
     function dismissLoadingScreen() {
         const screen = document.getElementById('loading-screen');
         if (screen) {
@@ -225,56 +226,54 @@
         }
     }
 
-    // ⭐ 核心防呆：監聽登入狀態改變與管理權限剔除機制
+    // ⭐ 修正後的安全驗證與彈出邏輯
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            // 背景撈資料確認該帳號在資料庫的角色
             onValue(ref(db, `users/${user.uid}`), (snapshot) => {
                 const userData = snapshot.val();
                 if (userData) {
                     if (userData.role === 'admin') {
-                        // 1. 如果確定是主管，順利解鎖顯示後台
+                        // 1. 權限正確，順利進入
                         document.getElementById('admin-name').innerText = `(${userData.name || '管理員'} 主管)`;
                         initCloudListeners();
                         dismissLoadingScreen();
                     } else {
-                        // 2. 🚨【核心修正】如果是員工企圖進後台：先強制登出 Firebase，再踢回首頁！
-                        alert('權限不足！您不是管理員，系統將強制登出並返回登入頁。');
-                        signOut(auth).then(() => {
-                            window.location.href = 'index.html'; 
-                        });
+                        // 2. 權限錯誤：先強制解開轉圈圈，跳提示，再登出跳轉
+                        dismissLoadingScreen();
+                        setTimeout(() => {
+                            alert('權限不足！您不是後台管理員，系統將自動登出並返回前台。');
+                            signOut(auth).then(() => {
+                                window.location.href = FRONTEND_PAGE; 
+                            });
+                        }, 200);
                     }
                 } else {
-                    // 如果在 users 節點根本找不到這個人，一樣登出剔除
-                    signOut(auth).then(() => { window.location.href = 'index.html'; });
+                    // 在 users 找不到資料的人
+                    dismissLoadingScreen();
+                    signOut(auth).then(() => { window.location.href = FRONTEND_PAGE; });
                 }
             }, { onlyOnce: true });
         } else {
-            // 3. 如果完全沒登入，直接回首頁
-            window.location.href = 'index.html';
+            // 3. 未登入者直接跳轉
+            window.location.href = FRONTEND_PAGE;
         }
     });
 
-    // 監聽雲端的打卡與請假紀錄
     function initCloudListeners() {
         let clockData = {}, leaveData = {};
-
         onValue(ref(db, 'clock_records'), (snapshot) => {
             clockData = snapshot.val() || {};
             mergeAndRenderTable(clockData, leaveData);
         });
-
         onValue(ref(db, 'leave_records'), (snapshot) => {
             leaveData = snapshot.val() || {};
             mergeAndRenderTable(clockData, leaveData);
         });
     }
 
-    // 混合並渲染資料
     function mergeAndRenderTable(clocks, leaves) {
         allMergedRecords = [];
-        let inCount = 0;
-        let outCount = 0;
+        let inCount = 0; let outCount = 0;
 
         if (clocks) {
             Object.keys(clocks).forEach(k => {
@@ -286,7 +285,6 @@
                 }
             });
         }
-
         if (leaves) {
             Object.keys(leaves).forEach(k => {
                 let item = leaves[k];
@@ -295,10 +293,8 @@
         }
 
         allMergedRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-
         const tbody = document.getElementById('data-table-body');
         const noDataMsg = document.getElementById('no-data-msg');
-        
         if (!tbody) return;
         tbody.innerHTML = '';
 
@@ -315,7 +311,6 @@
         allMergedRecords.forEach(item => {
             const tr = document.createElement('tr');
             let typeBadge = ''; let detailColumn = ''; let noteColumn = '';
-
             const nameDisp = item.name || item.empId || '未填';
             const emailDisp = item.email || '無';
             const dateDisp = item.date || '無日期';
@@ -347,7 +342,6 @@
         document.getElementById('checkout-count').innerText = outCount;
     }
 
-    // 清空歷史紀錄功能
     window.clearRecords = function() {
         if (confirm('確定要清空雲端資料庫上所有員工的打卡與請假紀錄嗎？此動作無法復原！')) {
             remove(ref(db, 'clock_records'))
@@ -357,7 +351,6 @@
         }
     }
 
-    // 匯出 CSV 報表
     window.exportToCSV = function() {
         if (allMergedRecords.length === 0) { alert('目前沒有資料可以匯出喔！'); return; }
         let csvContent = "\uFEFF員工姓名/編號,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
@@ -379,11 +372,10 @@
         document.body.removeChild(link);
     }
 
-    // 登出/返回前台
     window.handleLogout = function() {
         const screen = document.getElementById('loading-screen');
         if(screen) { screen.style.display = 'flex'; screen.style.opacity = '1'; }
-        signOut(auth).then(() => { window.location.href = 'index.html'; });
+        signOut(auth).then(() => { window.location.href = FRONTEND_PAGE; });
     }
 </script>
 
