@@ -29,7 +29,7 @@
             padding: 30px 20px;
         }
 
-        /* 🛠️ 載入中遮罩（優化：改為柔和淡出） */
+        /* 全螢幕載入中遮罩 - 加上防卡死保護 */
         #loading-screen { 
             position: fixed; 
             top: 0; 
@@ -47,13 +47,11 @@
         .spinner { width: 40px; height: 40px; border: 4px solid var(--border-color); border-top: 4px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* 主容器：預設可見，由遮罩蓋住即可，避免因 JS 延遲導致畫面空白 */
         .container {
             max-width: 1000px;
             margin: 0 auto;
         }
 
-        /* 頂部標題列 */
         .header {
             display: flex;
             justify-content: space-between;
@@ -69,7 +67,6 @@
             font-weight: 700;
         }
 
-        /* 數據統計卡片 */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -97,7 +94,6 @@
             color: var(--primary-color);
         }
 
-        /* 功能按鈕區 */
         .toolbar {
             display: flex;
             justify-content: space-between;
@@ -122,7 +118,6 @@
         .btn-logout { background-color: #64748b; color: white; margin-left: 10px; }
         .btn-logout:hover { background-color: #475569; }
 
-        /* 表格樣式 */
         .table-container {
             background: var(--card-bg);
             border-radius: 12px;
@@ -137,7 +132,6 @@
         tr:last-child td { border-bottom: none; }
         tr:hover { background-color: #f8fafc; }
 
-        /* 狀態標籤 */
         .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; text-align: center; }
         .badge-in { background-color: #dcfce7; color: var(--success-color); }
         .badge-out { background-color: #fee2e2; color: var(--danger-color); }
@@ -149,7 +143,7 @@
 
 <div id="loading-screen">
     <div class="spinner"></div>
-    <div style="color: #64748b; font-size: 14px; font-weight: 600;">雲端安全驗證中，請稍候...</div>
+    <div style="color: #64748b; font-size: 14px; font-weight: 600;">雲端資料安全同步中...</div>
 </div>
 
 <div class="container" id="admin-main">
@@ -185,7 +179,7 @@
         <table>
             <thead>
                 <tr>
-                    <th>員工姓名</th>
+                    <th>員工編號 / 姓名</th>
                     <th>電子郵件</th>
                     <th>動態類型</th>
                     <th>登記日期</th>
@@ -204,8 +198,8 @@
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ 請在此處換上你專案的 Firebase Config 設定金鑰
-    const firebaseConfig = {
+    // ⚠️ 務必在此處正確換上你專案的 Firebase Config 設定金鑰
+   const firebaseConfig = {
         apiKey: "AIzaSyDfTTRHfVCW-QpAPYuoDA4absfWO9OARcY", 
         authDomain: "youcheng-656a8.firebaseapp.com",
         databaseURL: "https://youcheng-656a8-default-rtdb.firebaseio.com",
@@ -222,7 +216,7 @@
 
     let allMergedRecords = [];
 
-    // 關閉遮罩的輔助函式
+    // 關閉遮罩的輔助函式（強制安全防呆）
     function dismissLoadingScreen() {
         const screen = document.getElementById('loading-screen');
         if (screen) {
@@ -231,18 +225,18 @@
         }
     }
 
-    // ⭐ 核心安全鎖（優化異步防卡死版）
+    // 🛡️ 雙重保險超時解鎖：如果 4 秒內網路連線或 Firebase 出任何狀況，強制關閉轉圈圈，確保看得到畫面
+    setTimeout(dismissLoadingScreen, 4000);
+
+    // ⭐ 身分安全驗證監聽
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            // 只要偵測到登入狀態，先放行畫面，防止因為連線慢而一直轉圈
-            dismissLoadingScreen();
-            
             // 背景同步讀取使用者資料核對權限
             onValue(ref(db, `users/${user.uid}`), (snapshot) => {
                 const userData = snapshot.val();
                 if (userData) {
                     if (userData.role === 'admin') {
-                        document.getElementById('admin-name').innerText = `(${userData.name} 主管)`;
+                        document.getElementById('admin-name').innerText = `(${userData.name || '管理員'} 主管)`;
                     } else {
                         alert('權限不足！您不是後台管理員。');
                         window.location.href = 'index.html'; 
@@ -253,13 +247,13 @@
             // 啟動雲端資料庫流水帳監聽
             initCloudListeners();
         } else {
-            // 如果完全沒登入，等 1.5 秒確認不是 Firebase 還在加載後，彈回首頁
+            // 沒登入直接導回前台
             setTimeout(() => {
                 if (!auth.currentUser) {
                     alert('登入逾期或尚未登入，請由首頁登入！');
                     window.location.href = 'index.html';
                 }
-            }, 1500);
+            }, 1000);
         }
     });
 
@@ -271,72 +265,95 @@
         onValue(ref(db, 'clock_records'), (snapshot) => {
             clockData = snapshot.val() || {};
             mergeAndRenderTable(clockData, leaveData);
+            dismissLoadingScreen(); // 順利拿到打卡資料後關閉轉圈
+        }, (error) => {
+            console.error(error);
+            dismissLoadingScreen(); // 發生錯誤也強制解鎖
         });
 
         // 監聽請假
         onValue(ref(db, 'leave_records'), (snapshot) => {
             leaveData = snapshot.val() || {};
             mergeAndRenderTable(clockData, leaveData);
+        }, (error) => {
+            console.error(error);
         });
     }
 
-    // 混合並渲染資料
+    // 混合並渲染資料（補上防呆、防 Null 機制）
     function mergeAndRenderTable(clocks, leaves) {
         allMergedRecords = [];
         let inCount = 0;
         let outCount = 0;
 
-        // 放入打卡紀錄
-        Object.keys(clocks).forEach(k => {
-            let item = clocks[k];
-            allMergedRecords.push({ ...item, recordType: 'clock' });
-            if (item.type === '上班') inCount++;
-            if (item.type === '下班') outCount++;
-        });
+        // 安全處理打卡紀錄
+        if (clocks) {
+            Object.keys(clocks).forEach(k => {
+                let item = clocks[k];
+                if (item) {
+                    allMergedRecords.push({ ...item, recordType: 'clock' });
+                    if (item.type === '上班') inCount++;
+                    if (item.type === '下班') outCount++;
+                }
+            });
+        }
 
-        // 放入請假紀錄
-        Object.keys(leaves).forEach(k => {
-            let item = leaves[k];
-            allMergedRecords.push({ ...item, recordType: 'leave', time: '線上申請' });
-        });
+        // 安全處理請假紀錄
+        if (leaves) {
+            Object.keys(leaves).forEach(k => {
+                let item = leaves[k];
+                if (item) {
+                    allMergedRecords.push({ ...item, recordType: 'leave', time: '線上申請' });
+                }
+            });
+        }
 
-        // 依據時間戳從新到舊排序
-        allMergedRecords.sort((a, b) => b.timestamp - a.timestamp);
+        // 依據時間戳從新到舊排序（防空白時間戳出錯）
+        allMergedRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
         const tbody = document.getElementById('data-table-body');
         const noDataMsg = document.getElementById('no-data-msg');
+        
+        if (!tbody) return;
         tbody.innerHTML = '';
 
         if (allMergedRecords.length === 0) {
-            noDataMsg.style.display = 'block';
+            if (noDataMsg) noDataMsg.style.display = 'block';
             document.getElementById('total-count').innerText = 0;
             document.getElementById('checkin-count').innerText = 0;
             document.getElementById('checkout-count').innerText = 0;
             return;
         }
 
-        noDataMsg.style.display = 'none';
+        if (noDataMsg) noDataMsg.style.display = 'none';
 
         allMergedRecords.forEach(item => {
             const tr = document.createElement('tr');
-            let typeBadge = ''; let detailColumn = ''; let noteColumn = '';
+            let typeBadge = ''; 
+            let detailColumn = ''; 
+            let noteColumn = '';
+
+            // 抓取欄位時全部加上 || '無'，確保舊格式或新格式相容不報錯
+            const nameDisp = item.name || item.empId || '未填';
+            const emailDisp = item.email || '無';
+            const dateDisp = item.date || '無日期';
 
             if (item.recordType === 'clock') {
                 const badgeClass = item.type === '上班' ? 'badge-in' : 'badge-out';
-                typeBadge = `<span class="badge ${badgeClass}">${item.type}打卡</span>`;
-                detailColumn = `<span style="font-family:monospace; font-weight:bold;">${item.time}</span>`;
-                noteColumn = `<span style="color:#2563eb;">📍 ${item.note || '未填'}</span>`;
+                typeBadge = `<span class="badge ${badgeClass}">${item.type || '打卡'}</span>`;
+                detailColumn = `<span style="font-family:monospace; font-weight:bold;">${item.time || ''}</span>`;
+                noteColumn = `<span style="color:#2563eb;">📍 ${item.note || '無備註'}</span>`;
             } else {
-                typeBadge = `<span class="badge badge-leave">請假(${item.type})</span>`;
-                detailColumn = `<span style="color:#b45309; font-weight:500;">📋 事由：${item.reason}</span>`;
+                typeBadge = `<span class="badge badge-leave">請假(${item.type || '未知'})</span>`;
+                detailColumn = `<span style="color:#b45309; font-weight:500;">📋 事由：${item.reason || '未填'}</span>`;
                 noteColumn = `<span style="color:#94a3b8; font-style:italic;">假單審核中</span>`;
             }
 
             tr.innerHTML = `
-                <td><strong>${item.name || '未填'}</strong></td>
-                <td style="color:#64748b; font-size:13px;">${item.email || '無'}</td>
+                <td><strong>${nameDisp}</strong></td>
+                <td style="color:#64748b; font-size:13px;">${emailDisp}</td>
                 <td>${typeBadge}</td>
-                <td>${item.date}</td>
+                <td>${dateDisp}</td>
                 <td>${detailColumn}</td>
                 <td>${noteColumn}</td>
             `;
@@ -368,35 +385,10 @@
         }
 
         let csvContent = "\uFEFF"; 
-        csvContent += "員工姓名,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
+        csvContent += "員工姓名/編號,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
 
         [...allMergedRecords].reverse().forEach(item => {
-            const typeStr = item.recordType === 'clock' ? `${item.type}打卡` : `請假(${item.type})`;
-            const detailStr = item.recordType === 'clock' ? item.time : `原因：${item.reason}`;
-            const noteStr = item.recordType === 'clock' ? item.note : '請假申請';
-            csvContent += `"${item.name}","${item.email}","${typeStr}","${item.date}","${detailStr}","${noteStr}"\n`;
-        });
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        const today = new Date().toISOString().split('T')[0];
-        link.setAttribute("download", `公司完整人事報表_${today}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    // 登出/返回前台
-    window.handleLogout = function() {
-        const screen = document.getElementById('loading-screen');
-        if(screen) { screen.style.display = 'flex'; screen.style.opacity = '1'; }
-        signOut(auth).then(() => {
-            window.location.href = 'index.html';
-        });
-    }
-</script>
-
-</body>
-</html>
+            const nameDisp = item.name || item.empId || '未填';
+            const emailDisp = item.email || '無';
+            const typeStr = item.recordType === 'clock' ? `${item.type || ''}打卡` : `請假(${item.type || ''})`;
+            const detailStr = item.record
