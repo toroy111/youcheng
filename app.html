@@ -29,7 +29,7 @@
             padding: 30px 20px;
         }
 
-        /* 全螢幕載入中遮罩 - 加上防卡死保護 */
+        /* 全螢幕載入中遮罩 */
         #loading-screen { 
             position: fixed; 
             top: 0; 
@@ -143,7 +143,7 @@
 
 <div id="loading-screen">
     <div class="spinner"></div>
-    <div style="color: #64748b; font-size: 14px; font-weight: 600;">雲端資料安全同步中...</div>
+    <div style="color: #64748b; font-size: 14px; font-weight: 600;">雲端安全連線驗證中...</div>
 </div>
 
 <div class="container" id="admin-main">
@@ -216,7 +216,7 @@
 
     let allMergedRecords = [];
 
-    // 關閉遮罩的輔助函式（強制安全防呆）
+    // 關閉遮罩的輔助函式
     function dismissLoadingScreen() {
         const screen = document.getElementById('loading-screen');
         if (screen) {
@@ -225,35 +225,33 @@
         }
     }
 
-    // 🛡️ 雙重保險超時解鎖：如果 4 秒內網路連線或 Firebase 出任何狀況，強制關閉轉圈圈，確保看得到畫面
-    setTimeout(dismissLoadingScreen, 4000);
-
-    // ⭐ 身分安全驗證監聽
+    // ⭐ 核心防呆：監聽登入狀態改變與管理權限剔除機制
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            // 背景同步讀取使用者資料核對權限
+            // 背景撈資料確認該帳號在資料庫的角色
             onValue(ref(db, `users/${user.uid}`), (snapshot) => {
                 const userData = snapshot.val();
                 if (userData) {
                     if (userData.role === 'admin') {
+                        // 1. 如果確定是主管，順利解鎖顯示後台
                         document.getElementById('admin-name').innerText = `(${userData.name || '管理員'} 主管)`;
+                        initCloudListeners();
+                        dismissLoadingScreen();
                     } else {
-                        alert('權限不足！您不是後台管理員。');
-                        window.location.href = 'index.html'; 
+                        // 2. 🚨【核心修正】如果是員工企圖進後台：先強制登出 Firebase，再踢回首頁！
+                        alert('權限不足！您不是管理員，系統將強制登出並返回登入頁。');
+                        signOut(auth).then(() => {
+                            window.location.href = 'index.html'; 
+                        });
                     }
+                } else {
+                    // 如果在 users 節點根本找不到這個人，一樣登出剔除
+                    signOut(auth).then(() => { window.location.href = 'index.html'; });
                 }
             }, { onlyOnce: true });
-
-            // 啟動雲端資料庫流水帳監聽
-            initCloudListeners();
         } else {
-            // 沒登入直接導回前台
-            setTimeout(() => {
-                if (!auth.currentUser) {
-                    alert('登入逾期或尚未登入，請由首頁登入！');
-                    window.location.href = 'index.html';
-                }
-            }, 1000);
+            // 3. 如果完全沒登入，直接回首頁
+            window.location.href = 'index.html';
         }
     });
 
@@ -261,32 +259,23 @@
     function initCloudListeners() {
         let clockData = {}, leaveData = {};
 
-        // 監聽打卡
         onValue(ref(db, 'clock_records'), (snapshot) => {
             clockData = snapshot.val() || {};
             mergeAndRenderTable(clockData, leaveData);
-            dismissLoadingScreen(); // 順利拿到打卡資料後關閉轉圈
-        }, (error) => {
-            console.error(error);
-            dismissLoadingScreen(); // 發生錯誤也強制解鎖
         });
 
-        // 監聽請假
         onValue(ref(db, 'leave_records'), (snapshot) => {
             leaveData = snapshot.val() || {};
             mergeAndRenderTable(clockData, leaveData);
-        }, (error) => {
-            console.error(error);
         });
     }
 
-    // 混合並渲染資料（補上防呆、防 Null 機制）
+    // 混合並渲染資料
     function mergeAndRenderTable(clocks, leaves) {
         allMergedRecords = [];
         let inCount = 0;
         let outCount = 0;
 
-        // 安全處理打卡紀錄
         if (clocks) {
             Object.keys(clocks).forEach(k => {
                 let item = clocks[k];
@@ -298,17 +287,13 @@
             });
         }
 
-        // 安全處理請假紀錄
         if (leaves) {
             Object.keys(leaves).forEach(k => {
                 let item = leaves[k];
-                if (item) {
-                    allMergedRecords.push({ ...item, recordType: 'leave', time: '線上申請' });
-                }
+                if (item) allMergedRecords.push({ ...item, recordType: 'leave', time: '線上申請' });
             });
         }
 
-        // 依據時間戳從新到舊排序（防空白時間戳出錯）
         allMergedRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
         const tbody = document.getElementById('data-table-body');
@@ -329,11 +314,8 @@
 
         allMergedRecords.forEach(item => {
             const tr = document.createElement('tr');
-            let typeBadge = ''; 
-            let detailColumn = ''; 
-            let noteColumn = '';
+            let typeBadge = ''; let detailColumn = ''; let noteColumn = '';
 
-            // 抓取欄位時全部加上 || '無'，確保舊格式或新格式相容不報錯
             const nameDisp = item.name || item.empId || '未填';
             const emailDisp = item.email || '無';
             const dateDisp = item.date || '無日期';
@@ -360,7 +342,6 @@
             tbody.appendChild(tr);
         });
 
-        // 更新數據看板
         document.getElementById('total-count').innerText = allMergedRecords.length;
         document.getElementById('checkin-count').innerText = inCount;
         document.getElementById('checkout-count').innerText = outCount;
@@ -368,27 +349,43 @@
 
     // 清空歷史紀錄功能
     window.clearRecords = function() {
-        if (confirm('確定要清空雲端資料庫上【所有員工】的打卡與請假紀錄嗎？此動作無法復原！')) {
+        if (confirm('確定要清空雲端資料庫上所有員工的打卡與請假紀錄嗎？此動作無法復原！')) {
             remove(ref(db, 'clock_records'))
                 .then(() => remove(ref(db, 'leave_records')))
-                .then(() => {
-                    alert('雲端歷史紀錄已成功清空！');
-                }).catch(err => alert('清空失敗：' + err.message));
+                .then(() => { alert('雲端歷史紀錄已成功清空！'); })
+                .catch(err => alert('清空失敗：' + err.message));
         }
     }
 
     // 匯出 CSV 報表
     window.exportToCSV = function() {
-        if (allMergedRecords.length === 0) {
-            alert('目前沒有資料可以匯出喔！');
-            return;
-        }
-
-        let csvContent = "\uFEFF"; 
-        csvContent += "員工姓名/編號,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
-
+        if (allMergedRecords.length === 0) { alert('目前沒有資料可以匯出喔！'); return; }
+        let csvContent = "\uFEFF員工姓名/編號,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
         [...allMergedRecords].reverse().forEach(item => {
             const nameDisp = item.name || item.empId || '未填';
             const emailDisp = item.email || '無';
             const typeStr = item.recordType === 'clock' ? `${item.type || ''}打卡` : `請假(${item.type || ''})`;
-            const detailStr = item.record
+            const detailStr = item.recordType === 'clock' ? (item.time || '') : `原因：${item.reason || ''}`;
+            const noteStr = item.recordType === 'clock' ? (item.note || '無') : '請假申請';
+            csvContent += `"${nameDisp}","${emailDisp}","${typeStr}","${item.date || ''}","${detailStr}","${noteStr}"\n`;
+        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `公司人事報表_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // 登出/返回前台
+    window.handleLogout = function() {
+        const screen = document.getElementById('loading-screen');
+        if(screen) { screen.style.display = 'flex'; screen.style.opacity = '1'; }
+        signOut(auth).then(() => { window.location.href = 'index.html'; });
+    }
+</script>
+
+</body>
+</html>
