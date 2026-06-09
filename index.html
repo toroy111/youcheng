@@ -410,6 +410,16 @@ body {
 </div>
 
 <script type="module">
+    // 提供 HTML onclick 呼叫的 Tab 切換函數
+window.switchUserTab = function(tabId) {
+    // 切換按鈕的 Active 狀態
+    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    
+    // 切換內容的 Active 狀態
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+}
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     // 🌟 第一步修改：這裡已經幫你補上 sendPasswordResetEmail 了！
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -521,6 +531,7 @@ body {
                     } else {
                         document.getElementById('user-welcome').innerText = `歡迎回來，${userData.name || '同仁'}`;
                         switchView('user');
+                        initUserHistoryListener(userData.email);
                     }
                 } else {
                     alert('找不到您的帳號身分資料，請重新註冊。');
@@ -734,6 +745,85 @@ body {
     };
     if (document.getElementById('btn-user-logout')) document.getElementById('btn-user-logout').addEventListener('click', logoutHandler);
     if (document.getElementById('btn-admin-logout')) document.getElementById('btn-admin-logout').addEventListener('click', logoutHandler);
+
+
+    // 🌟【把 ③ 的兩段獨立功能直接整塊貼在這邊！】====================
+    
+    // 1. 自動即時過濾並撈取「當前登入同仁」的專屬出勤紀錄
+    function initUserHistoryListener(userEmail) {
+        onValue(ref(db, 'clock_records'), (snapshot) => {
+            const data = snapshot.val() || {};
+            const tbody = document.getElementById('user-history-tbody');
+            const noHistoryMsg = document.getElementById('user-no-history');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            let myRecords = [];
+
+            Object.keys(data).forEach(k => {
+                if (data[k] && data[k].email === userEmail) {
+                    myRecords.push(data[k]);
+                }
+            });
+
+            myRecords.sort((a, b) => b.timestamp - a.timestamp);
+
+            if (myRecords.length === 0) {
+                if (noHistoryMsg) noHistoryMsg.style.display = 'block';
+                return;
+            }
+            if (noHistoryMsg) noHistoryMsg.style.display = 'none';
+
+            myRecords.forEach(item => {
+                const tr = document.createElement('tr');
+                const color = item.type === '上班' ? '#16a34a' : '#dc2626';
+                tr.innerHTML = `
+                    <td>${item.date}</td>
+                    <td><span style="color: ${color}; font-weight:bold;">${item.type}</span></td>
+                    <td style="font-family:monospace;">${item.time}</td>
+                    <td style="color:#64748b; font-size:12px;">${item.note || '無'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+    }
+
+    // 2. 線上請款送出按鈕監聽事件
+    const expenseBtn = document.getElementById('btn-expense-submit');
+    if (expenseBtn) {
+        expenseBtn.addEventListener('click', () => {
+            if (!currentUserProfile) return;
+            const title = document.getElementById('expense-title').value.trim();
+            const amount = document.getElementById('expense-amount').value.trim();
+            const note = document.getElementById('expense-note').value.trim();
+
+            if (!title || !amount) { alert('請填寫請款項目與金額！'); return; }
+
+            const expenseRecord = {
+                name: currentUserProfile.name,
+                email: currentUserProfile.email,
+                type: "費用請款",
+                title: title,
+                amount: Number(amount),
+                date: new Date().toISOString().split('T')[0],
+                note: note || "未提供憑證備註",
+                timestamp: Date.now()
+            };
+
+            showLoading(true);
+            push(ref(db, 'expense_records'), expenseRecord)
+                .then(() => {
+                    showLoading(false);
+                    alert('請款申請已成功雲端送出！請將實體發票交至財務部。');
+                    document.getElementById('expense-title').value = '';
+                    document.getElementById('expense-amount').value = '';
+                    document.getElementById('expense-note').value = '';
+                })
+                .catch(err => { showLoading(false); alert('申請失敗：' + err.message); });
+        });
+    }
+    // =============================================================
+
 </script>
 
 </body>
