@@ -20,9 +20,14 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
         body { background-color: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
         
+        /* 🛠️ 新增：全螢幕載入中遮罩，防止 F5 瞬間閃退回登入頁 */
+        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        .spinner { width: 40px; height: 40px; border: 4px solid var(--border); border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         .container { width: 100%; max-width: 1100px; background: var(--card); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 30px; display: none; }
         
-        .auth-box { width: 100%; max-width: 400px; background: var(--card); padding: 35px 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .auth-box { width: 100%; max-width: 400px; background: var(--card); padding: 35px 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: none; } /* 預設先隱藏，交由 JS 判斷 */
         .auth-box h2 { text-align: center; margin-bottom: 20px; color: var(--primary); font-weight: 700; }
 
         .form-group { margin-bottom: 15px; }
@@ -43,7 +48,6 @@
         .main-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 25px; }
         .btn-logout { width: auto; padding: 6px 12px; font-size: 13px; background-color: #64748b; }
 
-        /* 系統分頁導覽標籤 */
         .system-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
         .tab-btn { padding: 8px 16px; border: none; background: none; font-size: 15px; font-weight: 600; color: #64748b; cursor: pointer; border-radius: 6px; }
         .tab-btn.active { background: #eff6ff; color: var(--accent); }
@@ -77,6 +81,11 @@
 </head>
 <body>
 
+<div id="loading-screen">
+    <div class="spinner"></div>
+    <div style="color: #64748b; font-size: 14px; font-weight: 600;">雲端連線安全驗證中，請稍候...</div>
+</div>
+
 <div class="auth-box" id="login-section">
     <h2>員工登入</h2>
     <div class="form-group"><label>電子郵件 (Email)</label><input type="email" id="login-email" placeholder="example@company.com"></div>
@@ -85,7 +94,7 @@
     <div class="auth-links"><a onclick="switchAuthView('register')">註冊新帳號</a><a onclick="switchAuthView('forgot')">忘記密碼？</a></div>
 </div>
 
-<div class="auth-box" id="register-section" style="display: none;">
+<div class="auth-box" id="register-section">
     <h2>職員帳號註冊</h2>
     <div class="form-group"><label>真實姓名</label><input type="text" id="reg-name" placeholder="例如：張小明"></div>
     <div class="form-group"><label>電子郵件</label><input type="email" id="reg-email" placeholder="請填寫正確 Email"></div>
@@ -94,7 +103,7 @@
     <div class="auth-links" style="justify-content: center;"><a onclick="switchAuthView('login')">返回登入畫面</a></div>
 </div>
 
-<div class="auth-box" id="forgot-section" style="display: none;">
+<div class="auth-box" id="forgot-section">
     <h2>找回密碼</h2>
     <div class="form-group"><label>您的電子郵件</label><input type="email" id="forgot-email" placeholder="example@company.com"></div>
     <button class="btn btn-accent" style="width:100%;" onclick="authAction('forgot')">發送重設密碼信</button>
@@ -212,7 +221,7 @@
     import { getDatabase, ref, set, get, child, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     // ⚠️ 請在此處換上你專案的 Firebase Config 設定金鑰
-   const firebaseConfig = {
+    const firebaseConfig = {
         apiKey: "AIzaSyDfTTRHfVCW-QpAPYuoDA4absfWO9OARcY", 
         authDomain: "youcheng-656a8.firebaseapp.com",
         databaseURL: "https://youcheng-656a8-default-rtdb.firebaseio.com",
@@ -230,6 +239,11 @@
     let currentUserData = null;
     let currentAuthUser = null;
     let allMergedRecords = [];
+
+    // 隱藏加載畫面輔助函式
+    function hideLoading() {
+        document.getElementById('loading-screen').style.display = 'none';
+    }
 
     // 分頁切換邏輯
     window.switchSystemPage = function(page) {
@@ -270,220 +284,4 @@
         }
     }
 
-    // 監聽登入狀態改變
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            currentAuthUser = user;
-            get(child(ref(db), `users/${user.uid}`)).then((snapshot) => {
-                if (snapshot.exists()) {
-                    currentUserData = snapshot.val();
-                    document.querySelectorAll('.auth-box').forEach(el => el.style.display = 'none');
-                    document.getElementById('main-system').style.display = 'block';
-                    document.body.style.alignItems = 'flex-start';
-                    document.getElementById('user-display-name').innerText = currentUserData.name;
-                    
-                    if (currentUserData.role === 'admin') {
-                        document.getElementById('user-role-tag').innerText = '最高管理權限 / 主管';
-                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                    } else {
-                        document.getElementById('user-role-tag').innerText = '一般職員';
-                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-                    }
-                    initDataListeners();
-                }
-            });
-        } else {
-            document.getElementById('main-system').style.display = 'none';
-            switchAuthView('login');
-            document.body.style.alignItems = 'center';
-        }
-    });
-
-    window.handleLogout = function() { signOut(auth).then(() => { currentUserData = null; currentAuthUser = null; }); }
-
-    // 提交打卡 (內含備註欄位)
-    window.submitClock = function(type) {
-        if (!currentUserData || !currentAuthUser) return;
-        const note = document.getElementById('clock-note').value.trim();
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
-        const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false });
-
-        push(ref(db, 'clock_records'), {
-            uid: currentAuthUser.uid,
-            name: currentUserData.name,
-            email: currentUserData.email,
-            type: type,
-            date: dateStr,
-            time: timeStr,
-            note: note || "辦公室 / 未填寫",
-            timestamp: Date.now()
-        }).then(() => {
-            alert(`【${type}打卡成功】\n備註：${note || '無'}`);
-            document.getElementById('clock-note').value = '';
-        });
-    }
-
-    // 提交請假申請單
-    window.submitLeave = function() {
-        if (!currentUserData || !currentAuthUser) return;
-        const type = document.getElementById('leave-type').value;
-        const date = document.getElementById('leave-date').value;
-        const reason = document.getElementById('leave-reason').value.trim();
-
-        if (!date || !reason) { alert('請完整填寫請假日期與事由！'); return; }
-
-        push(ref(db, 'leave_records'), {
-            uid: currentAuthUser.uid,
-            name: currentUserData.name,
-            email: currentUserData.email,
-            type: type,
-            date: date,
-            reason: reason,
-            status: '已送出審核',
-            timestamp: Date.now()
-        }).then(() => {
-            alert('請假單已成功送出，請靜候主管審查！');
-            document.getElementById('leave-date').value = '';
-            document.getElementById('leave-reason').value = '';
-        });
-    }
-
-    window.submitPost = function() {
-        const type = document.getElementById('msg-type').value;
-        const content = document.getElementById('msg-content').value.trim();
-        if (!content) { alert('請填寫內容！'); return; }
-        push(ref(db, 'announcements'), { type: type, content: content, timestamp: Date.now() }).then(() => {
-            alert('公告發布成功！');
-            document.getElementById('msg-content').value = '';
-        });
-    }
-
-    // 雲端即時動態監聽
-    function initDataListeners() {
-        // 監聽公告
-        onValue(ref(db, 'announcements'), (snapshot) => {
-            const listEl = document.getElementById('announcement-list');
-            listEl.innerHTML = '';
-            const data = snapshot.val();
-            if (!data) { listEl.innerHTML = '<li class="info-item">目前沒有任何公告。</li>'; return; }
-            const arr = Object.keys(data).map(k => data[k]).sort((a,b) => b.timestamp - a.timestamp);
-            arr.forEach(item => {
-                const li = document.createElement('li'); li.className = 'info-item';
-                const prefix = item.type === '提醒' ? '<span class="badge-reminder">工作提醒</span>' : '📢 ';
-                li.innerHTML = `<div>${prefix} ${item.content}</div><div class="time">${new Date(item.timestamp).toLocaleString('zh-TW',{hour12:false})}</div>`;
-                listEl.appendChild(li);
-            });
-        });
-
-        // 監聽請假以及打卡流
-        let clockData = {}, leaveData = {};
-        
-        onValue(ref(db, 'clock_records'), (snapshot) => {
-            clockData = snapshot.val() || {};
-            mergeAndRenderAdminTable(clockData, leaveData);
-        });
-
-        onValue(ref(db, 'leave_records'), (snapshot) => {
-            leaveData = snapshot.val() || {};
-            
-            // 渲染員工個人的請假清單
-            const myLeaveList = document.getElementById('my-leave-list');
-            myLeaveList.innerHTML = '';
-            const myLeaves = Object.keys(leaveData).map(k => leaveData[k]).filter(i => i.uid === currentAuthUser.uid).sort((a,b) => b.timestamp - a.timestamp);
-            if(myLeaves.length === 0) { myLeaveList.innerHTML = '<li class="info-item">目前沒有請假紀錄。</li>'; }
-            myLeaves.forEach(item => {
-                const li = document.createElement('li'); li.className = 'info-item';
-                li.innerHTML = `<div><span class="badge-leave-tag">${item.type}</span> 日期：<strong>${item.date}</strong></div>
-                                <div style="color:#64748b; font-size:13px; margin-top:4px;">事由：${item.reason}</div>
-                                <div class="time" style="color:var(--warning)">狀態：${item.status}</div>`;
-                myLeaveList.appendChild(li);
-            });
-
-            mergeAndRenderAdminTable(clockData, leaveData);
-        });
-    }
-
-    // 合併打卡與請假資料，給主管看即時流水帳
-    function mergeAndRenderAdminTable(clocks, leaves) {
-        allMergedRecords = [];
-        Object.keys(clocks).forEach(k => {
-            let item = clocks[k];
-            allMergedRecords.push({ ...item, recordType: 'clock' });
-        });
-        Object.keys(leaves).forEach(k => {
-            let item = leaves[k];
-            allMergedRecords.push({ ...item, recordType: 'leave', time: '線上申請' });
-        });
-
-        allMergedRecords.sort((a,b) => b.timestamp - a.timestamp);
-
-        const tbody = document.getElementById('admin-table-body');
-        tbody.innerHTML = '';
-        if (allMergedRecords.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">尚無任何動態資料</td></tr>'; return; }
-
-        if (currentUserData && currentUserData.role === 'admin') {
-            allMergedRecords.forEach(item => {
-                const tr = document.createElement('tr');
-                let typeBadge = '';
-                let detailColumn = '';
-                let noteColumn = '';
-
-                if (item.recordType === 'clock') {
-                    const badgeClass = item.type === '上班' ? 'badge-in' : 'badge-out';
-                    typeBadge = `<span class="badge ${badgeClass}">${item.type}打卡</span>`;
-                    detailColumn = `<span style="font-family:monospace; font-weight:bold;">${item.time}</span>`;
-                    noteColumn = `<span style="color:#2563eb;">📍 ${item.note || '未填'}</span>`;
-                } else {
-                    typeBadge = `<span class="badge badge-leave">請假(${item.type})</span>`;
-                    detailColumn = `<span style="color:#b45309; font-weight:500;">📋 事由：${item.reason}</span>`;
-                    noteColumn = `<span style="color:#94a3b8; font-style:italic;">假單審核中</span>`;
-                }
-
-                tr.innerHTML = `
-                    <td><strong>${item.name}</strong></td>
-                    <td style="color:#64748b; font-size:12px;">${item.email}</td>
-                    <td>${typeBadge}</td>
-                    <td>${item.date}</td>
-                    <td>${detailColumn}</td>
-                    <td>${noteColumn}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-    }
-
-    // 匯出 CSV 報表
-    window.exportCSV = function() {
-        if (allMergedRecords.length === 0) { alert('無紀錄可匯出'); return; }
-        let csv = "\uFEFF員工姓名,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
-        [...allMergedRecords].reverse().forEach(item => {
-            const typeStr = item.recordType === 'clock' ? `${item.type}打卡` : `請假(${item.type})`;
-            const detailStr = item.recordType === 'clock' ? item.time : `原因：${item.reason}`;
-            const noteStr = item.recordType === 'clock' ? item.note : '請假申請';
-            csv += `"${item.name}","${item.email}","${typeStr}","${item.date}","${detailStr}","${noteStr}"\n`;
-        });
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `公司完整人事報表_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    // 時鐘
-    setInterval(() => {
-        const now = new Date();
-        const dateEl = document.getElementById('current-date');
-        const timeEl = document.getElementById('current-time');
-        if(dateEl && timeEl) {
-            dateEl.innerText = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-            timeEl.innerText = now.toLocaleTimeString('zh-TW', { hour12: false });
-        }
-    }, 1000);
-</script>
-
-</body>
-</html>
+    // ⭐⭐⭐ 核心安全鎖：
