@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>公司打卡管理系統 - 後台管理</title>
+    <title>公司打卡管理系統</title>
     <style>
         :root {
             --primary-color: #0f172a;
@@ -16,127 +16,53 @@
             --border-color: #e2e8f0;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); padding: 20px; }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 30px 20px;
-        }
-
-        /* 全螢幕載入中遮罩 */
+        /* 全螢幕載入遮罩 */
         #loading-screen { 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background: #ffffff; 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 9999;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #ffffff; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 9999;
             transition: opacity 0.3s ease;
         }
         .spinner { width: 40px; height: 40px; border: 4px solid var(--border-color); border-top: 4px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
+        /* 元件通用樣式 */
+        .card { background: var(--card-bg); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); max-width: 500px; margin: 40px auto; }
+        h2 { margin-bottom: 20px; color: var(--primary-color); text-align: center; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 14px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; }
+        
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; color: white; margin-bottom: 10px; }
+        .btn-primary { background-color: var(--accent-color); }
+        .btn-primary:hover { background-color: #1d4ed8; }
+        .btn-success { background-color: var(--success-color); }
+        .btn-danger { background-color: var(--danger-color); }
+        .btn-logout { background-color: #64748b; }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            font-size: 26px;
-            color: var(--primary-color);
-            font-weight: 700;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-
-        .stat-card p {
-            font-size: 14px;
-            color: #64748b;
-            margin-bottom: 5px;
-        }
-
-        .stat-card .number {
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--primary-color);
-        }
-
-        .toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .btn {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-export { background-color: var(--accent-color); color: white; }
-        .btn-export:hover { background-color: #1d4ed8; }
-        .btn-clear { background-color: #ef4444; color: white; }
-        .btn-clear:hover { background-color: #b91c1c; }
-        .btn-logout { background-color: #64748b; color: white; margin-left: 10px; }
-        .btn-logout:hover { background-color: #475569; }
-
-        .table-container {
-            background: var(--card-bg);
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 15px; }
-        th { background-color: #f1f5f9; color: #475569; font-weight: 600; padding: 14px 20px; border-bottom: 1px solid var(--border-color); }
-        td { padding: 14px 20px; border-bottom: 1px solid var(--border-color); color: #334155; }
-        tr:last-child td { border-bottom: none; }
+        /* 後台專用大型容器 */
+        .admin-container { max-width: 1100px; margin: 0 auto; display: none; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 20px; margin-bottom: 30px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .stat-card .number { font-size: 28px; font-weight: 700; color: var(--primary-color); }
+        
+        .table-container { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+        th, td { padding: 14px 20px; border-bottom: 1px solid var(--border-color); }
+        th { background-color: #f1f5f9; color: #475569; font-weight: 600; }
         tr:hover { background-color: #f8fafc; }
 
-        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; text-align: center; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
         .badge-in { background-color: #dcfce7; color: var(--success-color); }
         .badge-out { background-color: #fee2e2; color: var(--danger-color); }
         .badge-leave { background-color: #fef3c7; color: #d97706; }
-        .no-data { text-align: center; padding: 40px; color: #94a3b8; font-style: italic; }
+
+        /* 核心控制：用來切換畫面的 Class */
+        .view-section { display: none; }
     </style>
 </head>
 <body>
@@ -146,40 +72,96 @@
     <div style="color: #64748b; font-size: 14px; font-weight: 600;">雲端安全連線驗證中...</div>
 </div>
 
-<div class="container" id="admin-main">
+<div id="auth-view" class="view-section card" style="display: block;">
+    <h2 id="auth-title">員工/主管登入系統</h2>
+    
+    <div class="form-group" id="reg-name-group" style="display: none;">
+        <label>真實姓名</label>
+        <input type="text" id="auth-name" placeholder="請輸入姓名">
+    </div>
+    <div class="form-group" id="reg-role-group" style="display: none;">
+        <label>申請權限身分</label>
+        <select id="auth-role">
+            <option value="user">一般員工 (僅能打卡)</option>
+            <option value="admin">人事主管 (可看管理後台)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>電子郵件 (Email)</label>
+        <input type="email" id="auth-email" placeholder="example@company.com">
+    </div>
+    <div class="form-group">
+        <label>密碼</label>
+        <input type="password" id="auth-password" placeholder="請輸入密碼">
+    </div>
+
+    <button class="btn btn-primary" id="btn-auth-submit">登入</button>
+    <p style="text-align: center; font-size: 14px; color: #64748b; cursor: pointer; margin-top: 10px;" id="btn-toggle-view">沒有帳號？點此切換至註冊</p>
+</div>
+
+<div id="user-view" class="view-section card">
+    <h2>員工打卡回報系統</h2>
+    <p style="text-align:center; margin-bottom:20px; color:var(--accent-color);" id="user-welcome">歡迎回來</p>
+    
+    <div class="form-group">
+        <label>外勤/打卡備註說明</label>
+        <textarea id="clock-note" rows="3" placeholder="例如：客戶端外勤、定點辦公回報..."></textarea>
+    </div>
+    
+    <button class="btn btn-success" id="btn-clock-in">🌅 上班簽到報到</button>
+    <button class="btn btn-danger" id="btn-clock-out">🌇 下班簽退離開</button>
+    
+    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
+    
+    <h3 style="font-size:16px; margin-bottom:10px;">線上請假申請單</h3>
+    <div class="form-group">
+        <label>假別類型</label>
+        <select id="leave-type">
+            <option value="事假">事假</option>
+            <option value="病假">病假</option>
+            <option value="特休">特休 / 年假</option>
+            <option value="喪假/婚假">喪假 / 婚假</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>請假日期</label>
+        <input type="date" id="leave-date">
+    </div>
+    <div class="form-group">
+        <label>請假事由簡述</label>
+        <input type="text" id="leave-reason" placeholder="請輸入請假原因">
+    </div>
+    <button class="btn btn-primary" id="btn-leave-submit">📤 送出請假單申請</button>
+    
+    <button class="btn btn-logout" style="margin-top: 20px;" id="btn-user-logout">系統登出</button>
+</div>
+
+<div id="admin-view" class="view-section admin-container">
     <div class="header">
-        <h1>人事行政後台 － 員工打卡紀錄登記表 <span id="admin-name" style="font-size:16px; color:var(--accent-color);"></span></h1>
+        <h1>人事行政後台 － 員工打卡紀錄登記表 <span id="admin-welcome" style="font-size:16px; color:var(--accent-color);"></span></h1>
         <div>
-            <button class="btn btn-export" id="btn-export">📥 匯出 Excel (CSV)</button>
-            <button class="btn btn-logout" id="btn-logout">回前台/登出</button>
+            <button class="btn btn-primary" id="btn-admin-export" style="width:auto; display:inline-block;">📥 匯出 Excel (CSV)</button>
+            <button class="btn btn-logout" id="btn-admin-logout" style="width:auto; display:inline-block; margin-left:10px;">安全登出</button>
         </div>
     </div>
 
     <div class="stats-grid">
-        <div class="stat-card">
-            <p>今日總登記次數</p>
-            <div class="number" id="total-count">0</div>
-        </div>
-        <div class="stat-card">
-            <p>上班報到人數</p>
-            <div class="number" id="checkin-count" style="color: var(--success-color);">0</div>
-        </div>
-        <div class="stat-card">
-            <p>下班簽退人數</p>
-            <div class="number" id="checkout-count" style="color: var(--danger-color);">0</div>
-        </div>
+        <div class="stat-card"><p>今日總登記次數</p><div class="number" id="total-count">0</div></div>
+        <div class="stat-card"><p>上班報到人數</p><div class="number" id="checkin-count" style="color: var(--success-color);">0</div></div>
+        <div class="stat-card"><p>下班簽退人數</p><div class="number" id="checkout-count" style="color: var(--danger-color);">0</div></div>
     </div>
 
-    <div class="toolbar">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
         <h3 style="font-size: 18px; font-weight: 600;">歷史打卡流水帳 (Firebase 雲端即時連線)</h3>
-        <button class="btn btn-clear" id="btn-clear">⚠️ 清空雲端所有歷史紀錄</button>
+        <button class="btn btn-danger" id="btn-admin-clear" style="width:auto;">⚠️ 清空雲端所有歷史紀錄</button>
     </div>
 
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>員工編號 / 姓名</th>
+                    <th>員工姓名</th>
                     <th>電子郵件</th>
                     <th>動態類型</th>
                     <th>登記日期</th>
@@ -189,16 +171,17 @@
             </thead>
             <tbody id="data-table-body"></tbody>
         </table>
-        <div id="no-data-msg" class="no-data" style="display: none;">目前尚無任何員工登記資料</div>
+        <div id="no-data-msg" style="text-align:center; padding:40px; color:#94a3b8; display:none; font-style:italic;">目前尚無任何員工登記資料</div>
     </div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
- const firebaseConfig = {
+    // 🌟 請對照你的 Firebase 設定
+    const firebaseConfig = {
         apiKey: "AIzaSyDfTTRHfVCW-QpAPYuoDA4absfWO9OARcY", 
         authDomain: "youcheng-656a8.firebaseapp.com",
         databaseURL: "https://youcheng-656a8-default-rtdb.firebaseio.com",
@@ -206,128 +189,245 @@
         storageBucket: "youcheng-656a8.firebasestorage.app",
         messagingSenderId: "197356167437",
         appId: "1:197356167437:web:fa86347694f3ab592a5044"
- };
-    
-
+    }
+;
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    const FRONTEND_PAGE = "index.html"; 
+    let isLoginMode = true; // 控制登入/註冊模式切换
     let allMergedRecords = [];
+    let currentUserProfile = null;
 
-    function dismissLoadingScreen() {
+    // 輔助功能：控制畫面遮罩
+    function showLoading(show) {
         const screen = document.getElementById('loading-screen');
-        if (screen) {
-            screen.style.opacity = '0';
-            setTimeout(() => { screen.style.display = 'none'; }, 300);
+        if (!screen) return;
+        if (show) {
+            screen.style.display = 'flex'; screen.style.opacity = '1';
+        } else {
+            screen.style.opacity = '0'; setTimeout(() => { screen.style.display = 'none'; }, 300);
         }
     }
 
-    // 安全驗證
+    // 核心 SPA 機制：根據身分切換顯示對應區塊
+    function switchView(viewName) {
+        document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
+        if (viewName === 'auth') {
+            document.getElementById('auth-view').style.display = 'block';
+        } else if (viewName === 'user') {
+            document.getElementById('user-view').style.display = 'block';
+        } else if (viewName === 'admin') {
+            document.getElementById('admin-view').style.display = 'block';
+        }
+    }
+
+    // ==========================================
+    // 🔐 身分驗證監聽 (核心分流點)
+    // ==========================================
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            // 已登入，去資料庫查這個人的 role 權限
             onValue(ref(db, `users/${user.uid}`), (snapshot) => {
                 const userData = snapshot.val();
                 if (userData) {
+                    currentUserProfile = userData;
                     if (userData.role === 'admin') {
-                        document.getElementById('admin-name').innerText = `(${userData.name || '管理員'} 主管)`;
-                        initCloudListeners();
-                        dismissLoadingScreen();
+                        // 主管：切換到後台介面
+                        document.getElementById('admin-welcome').innerText = `(${userData.name || '管理員'} 主管)`;
+                        initAdminCloudListeners();
+                        switchView('admin');
                     } else {
-                        dismissLoadingScreen();
-                        setTimeout(() => {
-                            alert('權限不足！您不是後台管理員，系統將自動登出並返回前台。');
-                            signOut(auth).then(() => {
-                                window.location.href = FRONTEND_PAGE; 
-                            });
-                        }, 200);
+                        // 員工：切換到打卡介面
+                        document.getElementById('user-welcome').innerText = `歡迎回來，${userData.name || '同仁'}`;
+                        switchView('user');
                     }
                 } else {
-                    dismissLoadingScreen();
-                    signOut(auth).then(() => { window.location.href = FRONTEND_PAGE; });
+                    alert('找不到您的帳號身分資料，請重新註冊。');
+                    signOut(auth);
                 }
+                showLoading(false);
             }, { onlyOnce: true });
         } else {
-            window.location.href = FRONTEND_PAGE;
+            // 未登入，一律顯示登入介面
+            currentUserProfile = null;
+            switchView('auth');
+            showLoading(false);
         }
     });
 
-    function initCloudListeners() {
+    // ==========================================
+    // ✍️ 登入 與 註冊 按鈕邏輯
+    // ==========================================
+    document.getElementById('btn-toggle-view').addEventListener('click', () => {
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "員工/主管登入系統" : "新員工/主管帳號註冊";
+        document.getElementById('btn-auth-submit').innerText = isLoginMode ? "登入" : "註冊並創立帳號";
+        document.getElementById('btn-toggle-view').innerText = isLoginMode ? "沒有帳號？點此切換至註冊" : "已有帳號？點此切換至登入";
+        document.getElementById('reg-name-group').style.display = isLoginMode ? 'none' : 'block';
+        document.getElementById('reg-role-group').style.display = isLoginMode ? 'none' : 'block';
+    });
+
+    document.getElementById('btn-auth-submit').addEventListener('click', () => {
+        const email = document.getElementById('auth-email').value.trim();
+        const password = document.getElementById('auth-password').value.trim();
+        const name = document.getElementById('auth-name').value.trim();
+        const role = document.getElementById('auth-role').value;
+
+        if (!email || !password) { alert('請填寫完整 Email 與密碼！'); return; }
+
+        showLoading(true);
+        if (isLoginMode) {
+            // 登入
+            signInWithEmailAndPassword(auth, email, password)
+                .catch(err => { showLoading(false); alert('登入失敗：' + err.message); });
+        } else {
+            // 註冊
+            if (!name) { showLoading(false); alert('註冊請務必填寫真實姓名！'); return; }
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((cred) => {
+                    // 同步寫入 users 節點設定權限
+                    return set(ref(db, `users/${cred.user.uid}`), {
+                        name: name,
+                        email: email,
+                        role: role,
+                        uid: cred.user.uid
+                    });
+                })
+                .then(() => { alert('註冊成功！系統已為您自動導向。'); })
+                .catch(err => { showLoading(false); alert('註冊失敗：' + err.message); });
+        }
+    });
+
+    // ==========================================
+    // 🌅 員工功能：打卡與請假
+    // ==========================================
+    function handleClock(type) {
+        if (!currentUserProfile) return;
+        const note = document.getElementById('clock-note').value.trim();
+        const now = new Date();
+        
+        const newRecord = {
+            name: currentUserProfile.name,
+            email: currentUserProfile.email,
+            type: type,
+            date: now.toISOString().split('T')[0],
+            time: now.toTimeString().split(' ')[0],
+            timestamp: Date.now(),
+            note: note || "無備註"
+        };
+
+        showLoading(true);
+        push(ref(db, 'clock_records'), newRecord)
+            .then(() => {
+                showLoading(false);
+                alert(`【${type}】打卡回報雲端成功！`);
+                document.getElementById('clock-note').value = '';
+            })
+            .catch(err => { showLoading(false); alert('打卡失敗：' + err.message); });
+    }
+
+    document.getElementById('btn-clock-in').addEventListener('click', () => handleClock('上班'));
+    document.getElementById('btn-clock-out').addEventListener('click', () => handleClock('下班'));
+
+    document.getElementById('btn-leave-submit').addEventListener('click', () => {
+        if (!currentUserProfile) return;
+        const type = document.getElementById('leave-type').value;
+        const date = document.getElementById('leave-date').value;
+        const reason = document.getElementById('leave-reason').value.trim();
+
+        if (!date || !reason) { alert('請填寫請假日期與事由！'); return; }
+
+        const leaveRecord = {
+            name: currentUserProfile.name,
+            email: currentUserProfile.email,
+            type: type,
+            date: date,
+            reason: reason,
+            timestamp: Date.now()
+        };
+
+        showLoading(true);
+        push(ref(db, 'leave_records'), leaveRecord)
+            .then(() => {
+                showLoading(false);
+                alert('請假單已雲端送出，等待審核中。');
+                document.getElementById('leave-reason').value = '';
+            })
+            .catch(err => { showLoading(false); alert('申請失敗：' + err.message); });
+    });
+
+    // ==========================================
+    // 📊 主管功能：即時監聽與報表
+    // ==========================================
+    function initAdminCloudListeners() {
         let clockData = {}, leaveData = {};
         onValue(ref(db, 'clock_records'), (snapshot) => {
             clockData = snapshot.val() || {};
-            mergeAndRenderTable(clockData, leaveData);
+            renderAdminTable(clockData, leaveData);
         });
         onValue(ref(db, 'leave_records'), (snapshot) => {
             leaveData = snapshot.val() || {};
-            mergeAndRenderTable(clockData, leaveData);
+            renderAdminTable(clockData, leaveData);
         });
     }
 
-    function mergeAndRenderTable(clocks, leaves) {
+    function renderAdminTable(clocks, leaves) {
         allMergedRecords = [];
         let inCount = 0; let outCount = 0;
 
-        if (clocks) {
-            Object.keys(clocks).forEach(k => {
-                let item = clocks[k];
-                if (item) {
-                    allMergedRecords.push({ ...item, recordType: 'clock' });
-                    if (item.type === '上班') inCount++;
-                    if (item.type === '下班') outCount++;
-                }
-            });
-        }
-        if (leaves) {
-            Object.keys(leaves).forEach(k => {
-                let item = leaves[k];
-                if (item) allMergedRecords.push({ ...item, recordType: 'leave', time: '線上申請' });
-            });
-        }
+        Object.keys(clocks).forEach(k => {
+            let item = clocks[k];
+            if (item) {
+                allMergedRecords.push({ ...item, recordType: 'clock' });
+                if (item.type === '上班') inCount++;
+                if (item.type === '下班') outCount++;
+            }
+        });
+
+        Object.keys(leaves).forEach(k => {
+            let item = leaves[k];
+            if (item) allMergedRecords.push({ ...item, recordType: 'leave' });
+        });
 
         allMergedRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        
         const tbody = document.getElementById('data-table-body');
         const noDataMsg = document.getElementById('no-data-msg');
-        if (!tbody) return;
         tbody.innerHTML = '';
 
         if (allMergedRecords.length === 0) {
-            if (noDataMsg) noDataMsg.style.display = 'block';
+            noDataMsg.style.display = 'block';
             document.getElementById('total-count').innerText = 0;
             document.getElementById('checkin-count').innerText = 0;
             document.getElementById('checkout-count').innerText = 0;
             return;
         }
-
-        if (noDataMsg) noDataMsg.style.display = 'none';
+        noDataMsg.style.display = 'none';
 
         allMergedRecords.forEach(item => {
             const tr = document.createElement('tr');
-            let typeBadge = ''; let detailColumn = ''; let noteColumn = '';
-            const nameDisp = item.name || item.empId || '未填';
-            const emailDisp = item.email || '無';
-            const dateDisp = item.date || '無日期';
+            let typeBadge = '', detail = '', note = '';
 
             if (item.recordType === 'clock') {
                 const badgeClass = item.type === '上班' ? 'badge-in' : 'badge-out';
-                typeBadge = `<span class="badge ${badgeClass}">${item.type || '打卡'}</span>`;
-                detailColumn = `<span style="font-family:monospace; font-weight:bold;">${item.time || ''}</span>`;
-                noteColumn = `<span style="color:#2563eb;">📍 ${item.note || '無備註'}</span>`;
+                typeBadge = `<span class="badge ${badgeClass}">${item.type}</span>`;
+                detail = `<span style="font-family:monospace; font-weight:bold;">${item.time || ''}</span>`;
+                note = `<span style="color:#2563eb;">📍 ${item.note}</span>`;
             } else {
-                typeBadge = `<span class="badge badge-leave">請假(${item.type || '未知'})</span>`;
-                detailColumn = `<span style="color:#b45309; font-weight:500;">📋 事由：${item.reason || '未填'}</span>`;
-                noteColumn = `<span style="color:#94a3b8; font-style:italic;">假單審核中</span>`;
+                typeBadge = `<span class="badge badge-leave">請假(${item.type})</span>`;
+                detail = `<span style="color:#b45309; font-weight:500;">📋 事由：${item.reason}</span>`;
+                note = `<span style="color:#94a3b8; font-style:italic;">假單審核中</span>`;
             }
 
             tr.innerHTML = `
-                <td><strong>${nameDisp}</strong></td>
-                <td style="color:#64748b; font-size:13px;">${emailDisp}</td>
+                <td><strong>${item.name || '未填'}</strong></td>
+                <td style="color:#64748b; font-size:13px;">${item.email}</td>
                 <td>${typeBadge}</td>
-                <td>${dateDisp}</td>
-                <td>${detailColumn}</td>
-                <td>${noteColumn}</td>
+                <td>${item.date}</td>
+                <td>${detail}</td>
+                <td>${note}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -337,26 +437,26 @@
         document.getElementById('checkout-count').innerText = outCount;
     }
 
-    // 💡 改用標準的 EventListener 進行事件監聽
-    document.getElementById('btn-clear').addEventListener('click', () => {
-        if (confirm('確定要清空雲端資料庫上所有員工的打卡與請假紀錄嗎？此動作無法復原！')) {
+    // 主管清空數據
+    document.getElementById('btn-admin-clear').addEventListener('click', () => {
+        if (confirm('確定要清空雲端上所有歷史紀錄嗎？此動作無法復原！')) {
+            showLoading(true);
             remove(ref(db, 'clock_records'))
                 .then(() => remove(ref(db, 'leave_records')))
-                .then(() => { alert('雲端歷史紀錄已成功清空！'); })
-                .catch(err => alert('清空失敗：' + err.message));
+                .then(() => { showLoading(false); alert('雲端紀錄已成功清空！'); })
+                .catch(err => { showLoading(false); alert('清空失敗：' + err.message); });
         }
     });
 
-    document.getElementById('btn-export').addEventListener('click', () => {
-        if (allMergedRecords.length === 0) { alert('目前沒有資料可以匯出喔！'); return; }
-        let csvContent = "\uFEFF員工姓名/編號,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
+    // 主管匯出 CSV
+    document.getElementById('btn-admin-export').addEventListener('click', () => {
+        if (allMergedRecords.length === 0) { alert('目前沒有資料可以匯出！'); return; }
+        let csvContent = "\uFEFF員工姓名,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
         [...allMergedRecords].reverse().forEach(item => {
-            const nameDisp = item.name || item.empId || '未填';
-            const emailDisp = item.email || '無';
-            const typeStr = item.recordType === 'clock' ? `${item.type || ''}打卡` : `請假(${item.type || ''})`;
-            const detailStr = item.recordType === 'clock' ? (item.time || '') : `原因：${item.reason || ''}`;
-            const noteStr = item.recordType === 'clock' ? (item.note || '無') : '請假申請';
-            csvContent += `"${nameDisp}","${emailDisp}","${typeStr}","${item.date || ''}","${detailStr}","${noteStr}"\n`;
+            const typeStr = item.recordType === 'clock' ? `${item.type}打卡` : `請假(${item.type})`;
+            const detailStr = item.recordType === 'clock' ? (item.time || '') : `原因：${item.reason}`;
+            const noteStr = item.recordType === 'clock' ? item.note : '請假申請';
+            csvContent += `"${item.name}","${item.email}","${typeStr}","${item.date}","${detailStr}","${noteStr}"\n`;
         });
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
@@ -368,11 +468,15 @@
         document.body.removeChild(link);
     });
 
-    document.getElementById('btn-logout').addEventListener('click', () => {
-        const screen = document.getElementById('loading-screen');
-        if(screen) { screen.style.display = 'flex'; screen.style.opacity = '1'; }
-        signOut(auth).then(() => { window.location.href = FRONTEND_PAGE; });
-    });
+    // ==========================================
+    // 🚪 登出功能 (兩邊通用)
+    // ==========================================
+    const logoutHandler = () => {
+        showLoading(true);
+        signOut(auth).catch(err => { showLoading(false); alert('登出失敗：' + err.message); });
+    };
+    document.getElementById('btn-user-logout').addEventListener('click', logoutHandler);
+    document.getElementById('btn-admin-logout').addEventListener('click', logoutHandler);
 </script>
 
 </body>
