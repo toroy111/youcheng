@@ -29,16 +29,28 @@
             padding: 30px 20px;
         }
 
-        /* 🛠️ 新增：後台專用全螢幕載入中遮罩 */
-        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; }
+        /* 🛠️ 載入中遮罩（優化：改為柔和淡出） */
+        #loading-screen { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: #ffffff; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
         .spinner { width: 40px; height: 40px; border: 4px solid var(--border-color); border-top: 4px solid var(--accent-color); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* 後台主容器預設先隱藏，等驗證過是管理員才打開 */
+        /* 主容器：預設可見，由遮罩蓋住即可，避免因 JS 延遲導致畫面空白 */
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            display: none; 
         }
 
         /* 頂部標題列 */
@@ -137,7 +149,7 @@
 
 <div id="loading-screen">
     <div class="spinner"></div>
-    <div style="color: #64748b; font-size: 14px; font-weight: 600;">管理員權限安全驗證中...</div>
+    <div style="color: #64748b; font-size: 14px; font-weight: 600;">雲端安全驗證中，請稍候...</div>
 </div>
 
 <div class="container" id="admin-main">
@@ -210,29 +222,44 @@
 
     let allMergedRecords = [];
 
-    // ⭐ 核心安全鎖：檢查是否為登入狀態的管理員
+    // 關閉遮罩的輔助函式
+    function dismissLoadingScreen() {
+        const screen = document.getElementById('loading-screen');
+        if (screen) {
+            screen.style.opacity = '0';
+            setTimeout(() => { screen.style.display = 'none'; }, 300);
+        }
+    }
+
+    // ⭐ 核心安全鎖（優化異步防卡死版）
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            // 連線到資料庫確認該 UID 的角色是否為主管 (admin)
+            // 只要偵測到登入狀態，先放行畫面，防止因為連線慢而一直轉圈
+            dismissLoadingScreen();
+            
+            // 背景同步讀取使用者資料核對權限
             onValue(ref(db, `users/${user.uid}`), (snapshot) => {
                 const userData = snapshot.val();
-                if (userData && userData.role === 'admin') {
-                    // 驗證成功，解鎖畫面
-                    document.getElementById('admin-name').innerText = `(${userData.name} 主管)`;
-                    document.getElementById('loading-screen').style.display = 'none';
-                    document.getElementById('admin-main').style.display = 'block';
-                    
-                    // 開始監聽雲端資料
-                    initCloudListeners();
-                } else {
-                    alert('權限不足！您不是後台管理員。');
-                    window.location.href = 'index.html'; // 踢回首頁
+                if (userData) {
+                    if (userData.role === 'admin') {
+                        document.getElementById('admin-name').innerText = `(${userData.name} 主管)`;
+                    } else {
+                        alert('權限不足！您不是後台管理員。');
+                        window.location.href = 'index.html'; 
+                    }
                 }
             }, { onlyOnce: true });
+
+            // 啟動雲端資料庫流水帳監聽
+            initCloudListeners();
         } else {
-            // 沒登入，直接剔除
-            alert('請先由首頁進行登入！');
-            window.location.href = 'index.html';
+            // 如果完全沒登入，等 1.5 秒確認不是 Firebase 還在加載後，彈回首頁
+            setTimeout(() => {
+                if (!auth.currentUser) {
+                    alert('登入逾期或尚未登入，請由首頁登入！');
+                    window.location.href = 'index.html';
+                }
+            }, 1500);
         }
     });
 
@@ -301,4 +328,75 @@
                 noteColumn = `<span style="color:#2563eb;">📍 ${item.note || '未填'}</span>`;
             } else {
                 typeBadge = `<span class="badge badge-leave">請假(${item.type})</span>`;
-                detailColumn = `<span style="color:#b45309; font-weight:
+                detailColumn = `<span style="color:#b45309; font-weight:500;">📋 事由：${item.reason}</span>`;
+                noteColumn = `<span style="color:#94a3b8; font-style:italic;">假單審核中</span>`;
+            }
+
+            tr.innerHTML = `
+                <td><strong>${item.name || '未填'}</strong></td>
+                <td style="color:#64748b; font-size:13px;">${item.email || '無'}</td>
+                <td>${typeBadge}</td>
+                <td>${item.date}</td>
+                <td>${detailColumn}</td>
+                <td>${noteColumn}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // 更新數據看板
+        document.getElementById('total-count').innerText = allMergedRecords.length;
+        document.getElementById('checkin-count').innerText = inCount;
+        document.getElementById('checkout-count').innerText = outCount;
+    }
+
+    // 清空歷史紀錄功能
+    window.clearRecords = function() {
+        if (confirm('確定要清空雲端資料庫上【所有員工】的打卡與請假紀錄嗎？此動作無法復原！')) {
+            remove(ref(db, 'clock_records'))
+                .then(() => remove(ref(db, 'leave_records')))
+                .then(() => {
+                    alert('雲端歷史紀錄已成功清空！');
+                }).catch(err => alert('清空失敗：' + err.message));
+        }
+    }
+
+    // 匯出 CSV 報表
+    window.exportToCSV = function() {
+        if (allMergedRecords.length === 0) {
+            alert('目前沒有資料可以匯出喔！');
+            return;
+        }
+
+        let csvContent = "\uFEFF"; 
+        csvContent += "員工姓名,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
+
+        [...allMergedRecords].reverse().forEach(item => {
+            const typeStr = item.recordType === 'clock' ? `${item.type}打卡` : `請假(${item.type})`;
+            const detailStr = item.recordType === 'clock' ? item.time : `原因：${item.reason}`;
+            const noteStr = item.recordType === 'clock' ? item.note : '請假申請';
+            csvContent += `"${item.name}","${item.email}","${typeStr}","${item.date}","${detailStr}","${noteStr}"\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        const today = new Date().toISOString().split('T')[0];
+        link.setAttribute("download", `公司完整人事報表_${today}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    // 登出/返回前台
+    window.handleLogout = function() {
+        const screen = document.getElementById('loading-screen');
+        if(screen) { screen.style.display = 'flex'; screen.style.opacity = '1'; }
+        signOut(auth).then(() => {
+            window.location.href = 'index.html';
+        });
+    }
+</script>
+
+</body>
+</html>
