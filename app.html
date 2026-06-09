@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>企業全功能雲端人事管理系統</title>
+    <title>企業雲端人事管理系統</title>
     <style>
         :root {
             --primary: #1e293b;
@@ -20,52 +20,49 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; }
         body { background-color: var(--bg); color: var(--text); padding: 20px; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
         
+        /* 系統大容器 */
         .container { width: 100%; max-width: 1000px; background: var(--card); border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); padding: 30px; display: none; }
         
-        /* 1. 登入介面專用樣式 */
-        .login-box { width: 100%; max-width: 400px; background: var(--card); padding: 40px 30px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; }
-        .login-box h2 { margin-bottom: 25px; color: var(--primary); font-weight: 700; }
+        /* 登入 / 註冊彈出盒樣式 */
+        .auth-box { width: 100%; max-width: 400px; background: var(--card); padding: 35px 25px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .auth-box h2 { text-align: center; margin-bottom: 20px; color: var(--primary); font-weight: 700; }
 
-        /* 公用表單與按鈕 */
-        .form-group { margin-bottom: 20px; text-align: left; }
-        .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
-        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 15px; outline: none; }
-        .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+        .form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; outline: none; }
+        .form-group input:focus { border-color: var(--accent); }
         
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; color: white; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn { width: 100%; padding: 11px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; color: white; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .btn-accent { background-color: var(--accent); }
         .btn-accent:hover { background-color: #1d4ed8; }
         .btn-success { background-color: var(--success); }
         .btn-danger { background-color: var(--danger); }
 
-        /* 2. 主系統頂部列 */
+        .auth-links { display: flex; justify-content: space-between; margin-top: 15px; font-size: 13px; }
+        .auth-links a { color: var(--accent); text-decoration: none; cursor: pointer; }
+        .auth-links a:hover { text-decoration: underline; }
+
+        /* 主系統頂部列 */
         .main-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 25px; }
-        .user-info { font-size: 15px; }
         .btn-logout { width: auto; padding: 6px 12px; font-size: 13px; background-color: #64748b; }
 
-        /* 區塊版面配置 */
+        /* 區塊配置 */
         .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 25px; }
         @media(min-width: 768px) { .dashboard-grid { grid-template-columns: 1fr 1fr; } .full-width { grid-column: span 2; } }
 
-        /* 卡片元件 */
         .card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-        .card h3 { font-size: 18px; margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 8px; border-left: 4px solid var(--accent); padding-left: 10px; }
+        .card h3 { font-size: 17px; margin-bottom: 15px; color: var(--primary); display: flex; align-items: center; gap: 8px; border-left: 4px solid var(--accent); padding-left: 10px; }
 
-        /* 時鐘與打卡按鈕 */
         .clock-box { text-align: center; background: #fff; padding: 15px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 15px; }
         #current-time { font-size: 28px; font-weight: 700; color: var(--accent); }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
 
-        /* 列表樣式 (公告、提醒) */
         .info-list { list-style: none; max-height: 200px; overflow-y: auto; }
         .info-item { background: #fff; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 10px; font-size: 14px; }
         .info-item .time { font-size: 12px; color: #94a3b8; margin-top: 5px; text-align: right; }
         .badge-reminder { background-color: #fef3c7; color: #d97706; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-right: 5px; }
 
-        /* 權限控管隱藏區塊 */
         .admin-only { display: none; }
-
-        /* 表格樣式 */
         .table-container { background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
         th, td { padding: 12px 15px; border-bottom: 1px solid var(--border); }
@@ -77,20 +74,66 @@
 </head>
 <body>
 
-<div class="login-box" id="login-section">
-    <h2>企業系統登入</h2>
+<div class="auth-box" id="login-section">
+    <h2>員工登入</h2>
     <div class="form-group">
-        <label for="login-id">員工編號</label>
-        <input type="text" id="login-id" placeholder="請輸入您的員編 (如: EMP001)" autocomplete="off">
+        <label>電子郵件 (Email)</label>
+        <input type="email" id="login-email" placeholder="example@company.com">
     </div>
-    <button class="btn btn-accent" onclick="handleLogin()">安全登入</button>
+    <div class="form-group">
+        <label>密碼</label>
+        <input type="password" id="login-password" placeholder="請輸入密碼">
+    </div>
+    <button class="btn btn-accent" onclick="authAction('login')">安全登入</button>
+    <div class="auth-links">
+        <a onclick="switchAuthView('register')">註冊新帳號</a>
+        <a onclick="switchAuthView('forgot')">忘記密碼？</a>
+    </div>
 </div>
+
+<div class="auth-box" id="register-section" style="display: none;">
+    <h2>職員帳號註冊</h2>
+    <div class="form-group">
+        <label>真實姓名</label>
+        <input type="text" id="reg-name" placeholder="例如：張小明">
+    </div>
+    <div class="form-group">
+        <label>員工編號</label>
+        <input type="text" id="reg-empid" placeholder="例如：EMP05">
+    </div>
+    <div class="form-group">
+        <label>電子郵件 (做為登入帳號)</label>
+        <input type="email" id="reg-email" placeholder="請填寫正確 Email">
+    </div>
+    <div class="form-group">
+        <label>設定密碼 (至少 6 碼)</label>
+        <input type="password" id="reg-password" placeholder="請設定登入密碼">
+    </div>
+    <button class="btn btn-success" onclick="authAction('register')">建立帳號</button>
+    <div class="auth-links" style="justify-content: center;">
+        <a onclick="switchAuthView('login')">返回登入畫面</a>
+    </div>
+</div>
+
+<div class="auth-box" id="forgot-section" style="display: none;">
+    <h2>找回密碼</h2>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 15px; text-align: center;">輸入註冊的 Email，系統會自動寄送密碼重設信給您。</p>
+    <div class="form-group">
+        <label>您的電子郵件 (Email)</label>
+        <input type="email" id="forgot-email" placeholder="example@company.com">
+    </div>
+    <button class="btn btn-accent" onclick="authAction('forgot')">發送重設密碼信</button>
+    <div class="auth-links" style="justify-content: center;">
+        <a onclick="switchAuthView('login')">返回登入畫面</a>
+    </div>
+</div>
+
 
 <div class="container" id="main-system">
     <div class="main-header">
         <div class="user-info">
             歡迎回來，<strong id="user-display-name">載入中...</strong> 
-            [<span id="user-role-tag" style="color: var(--accent); font-weight: bold;">職員</span>]
+            [<span id="user-role-tag" style="color: var(--accent); font-weight: bold;">讀取中...</span>]
         </div>
         <button class="btn btn-logout" onclick="handleLogout()">登出系統</button>
     </div>
@@ -110,15 +153,14 @@
 
         <div class="card">
             <h3>📢 公司公告與工作提醒</h3>
-            <ul class="info-list" id="announcement-list">
-                </ul>
+            <ul class="info-list" id="announcement-list"></ul>
         </div>
 
         <div class="card full-width admin-only">
             <h3>🛠️ 主管行政管理控制台</h3>
             <div class="grid-2" style="margin-bottom: 20px; background: #fff; padding: 15px; border-radius: 8px; border:1px solid var(--border)">
                 <div>
-                    <h4 style="margin-bottom: 10px; font-size: 15px;">發布新公告 / 工作提醒</h4>
+                    <h4 style="margin-bottom: 10px; font-size: 14px;">發布新公告 / 工作提醒</h4>
                     <div class="form-group">
                         <select id="msg-type">
                             <option value="公告">📢 一般公司公告</option>
@@ -131,12 +173,12 @@
                     <button class="btn btn-accent" style="padding: 8px;" onclick="submitPost()">確認發布</button>
                 </div>
                 <div style="border-left: 1px solid var(--border); padding-left: 20px; display: flex; flex-direction: column; justify-content: center;">
-                    <h4 style="margin-bottom: 10px; font-size: 15px;">數據報表匯出</h4>
+                    <h4 style="margin-bottom: 10px; font-size: 14px;">數據報表匯出</h4>
                     <button class="btn btn-success" onclick="exportCSV()">📥 匯出全公司打卡紀錄 (CSV)</button>
                 </div>
             </div>
 
-            <h4 style="font-size: 15px; margin-bottom: 5px;">全公司即時打卡流水帳</h4>
+            <h4 style="font-size: 14px; margin-bottom: 5px;">全公司即時打卡流水帳</h4>
             <div class="table-container">
                 <table>
                     <thead>
@@ -156,9 +198,10 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, get, child, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, set, get, child, push, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ 請填入您的 Firebase 設定
+    // ⚠️ 請填入您的 Firebase 設定資訊
     const firebaseConfig = {
         apiKey: "YOUR_API_KEY",
         authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -170,75 +213,117 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // 當前登入的使用者暫存資料
-    let currentUser = null;
-    let allClockRecords = []; 
+    let currentUserData = null;
+    let allClockRecords = [];
 
-    // 時鐘動態運作
-    setInterval(() => {
-        const now = new Date();
-        document.getElementById('current-date').innerText = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
-        document.getElementById('current-time').innerText = now.toLocaleTimeString('zh-TW', { hour12: false });
-    }, 1000);
+    // 1. 驗證切換畫面控制
+    window.switchAuthView = function(view) {
+        document.getElementById('login-section').style.display = view === 'login' ? 'block' : 'none';
+        document.getElementById('register-section').style.display = view === 'register' ? 'block' : 'none';
+        document.getElementById('forgot-section').style.display = view === 'forgot' ? 'block' : 'none';
+    }
 
-    // 1. 處理登入驗證
-    window.handleLogin = function() {
-        const inputId = document.getElementById('login-id').value.trim().toUpperCase();
-        if (!inputId) { alert('請輸入員工編號！'); return; }
+    // 2. 驗證動作核心 (登入、註冊、忘記密碼)
+    window.authAction = function(type) {
+        if (type === 'register') {
+            const name = document.getElementById('reg-name').value.trim();
+            const empid = document.getElementById('reg-empid').value.trim().toUpperCase();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
 
-        // 到 Firebase 尋找該員工資料
-        get(child(ref(db), `users/${inputId}`)).then((snapshot) => {
-            if (snapshot.exists()) {
-                const userData = snapshot.val();
-                currentUser = { id: inputId, name: userData.name, role: userData.role };
-                
-                // 登入成功，切換畫面
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('main-system').style.display = 'block';
-                document.body.style.alignItems = 'flex-start';
+            if (!name || !empid || !email || !password) { alert('請填寫所有欄位！'); return; }
+            
+            // 雲端註冊帳號
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    const uid = userCredential.user.uid;
+                    // 在 Database 建立使用者基本資料檔，預設權限為一般職員 (staff)
+                    set(ref(db, `users/${uid}`), {
+                        name: name,
+                        empid: empid,
+                        role: 'staff' 
+                    }).then(() => {
+                        alert('註冊成功！系統已為您自動登入。');
+                        switchAuthView('login');
+                    });
+                })
+                .catch(err => alert('註冊失敗：' + err.message));
 
-                // 渲染使用者資訊
-                document.getElementById('user-display-name').innerText = `${currentUser.name} (${currentUser.id})`;
-                document.getElementById('user-role-tag').innerText = currentUser.role === 'admin' ? '最高管理權限 / 主管' : '一般職員';
+        } else if (type === 'login') {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            if (!email || !password) { alert('請輸入帳號密碼！'); return; }
 
-                // ⭐⭐⭐ 關鍵權限判定：如果是主管(admin)，就把隱藏的管理功能打開
-                if (currentUser.role === 'admin') {
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                } else {
-                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+            signInWithEmailAndPassword(auth, email, password)
+                .catch(err => alert('登入失敗：帳號密碼錯誤或不存在！'));
+
+        } else if (type === 'forgot') {
+            const email = document.getElementById('forgot-email').value.trim();
+            if (!email) { alert('請輸入 Email！'); return; }
+
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    alert('密碼重設郵件已發送！請檢查您的收件匣（或垃圾信箱）。');
+                    switchAuthView('login');
+                })
+                .catch(err => alert('發送失敗：' + err.message));
+        }
+    }
+
+    // 3. 監聽登入狀態改變 (最安全的狀態鎖定)
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // 使用者已登入，去撈取 Database 的個人權限資料
+            get(child(ref(db), `users/${user.uid}`)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    currentUserData = snapshot.val();
+                    
+                    // 切換主系統顯示
+                    document.querySelectorAll('.auth-box').forEach(el => el.style.display = 'none');
+                    document.getElementById('main-system').style.display = 'block';
+                    document.body.style.alignItems = 'flex-start';
+
+                    document.getElementById('user-display-name').innerText = `${currentUserData.name} (${currentUserData.empid})`;
+                    
+                    // ⭐⭐⭐ 檢查並開啟主管最高管理權限
+                    if (currentUserData.role === 'admin') {
+                        document.getElementById('user-role-tag').innerText = '最高管理權限 / 主管';
+                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                    } else {
+                        document.getElementById('user-role-tag').innerText = '一般職員';
+                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+                    }
+
+                    // 啟動資料庫監聽
+                    initDataListeners();
                 }
+            });
+        } else {
+            // 未登入，強迫回登入頁
+            document.getElementById('main-system').style.display = 'none';
+            switchAuthView('login');
+            document.body.style.alignItems = 'center';
+        }
+    });
 
-                // 啟動雲端即時監聽（公告、打卡紀錄）
-                initDataListeners();
-            } else {
-                alert('登入失敗：找不到此員工編號，請與行政人員確認！');
-            }
-        }).catch((error) => {
-            alert('連線錯誤：' + error.message);
-        });
-    }
-
-    // 2. 登出
+    // 4. 登出
     window.handleLogout = function() {
-        currentUser = null;
-        document.getElementById('login-id').value = '';
-        document.getElementById('login-section').style.display = 'block';
-        document.getElementById('main-system').style.display = 'none';
-        document.body.style.alignItems = 'center';
+        signOut(auth).then(() => { currentUserData = null; });
     }
 
-    // 3. 員工打卡提交
+    // 5. 提交打卡
     window.submitClock = function(type) {
-        if (!currentUser) return;
+        if (!currentUserData) return;
         const now = new Date();
         const dateStr = now.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' });
         const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false });
 
         const log = {
-            empId: currentUser.id,
-            name: currentUser.name,
+            empid: currentUserData.empid,
+            name: currentUserData.name,
             type: type,
             date: dateStr,
             time: timeStr,
@@ -246,41 +331,35 @@
         };
 
         push(ref(db, 'clock_records'), log).then(() => {
-            alert(`【${type}打卡成功】\n時間：${timeStr}\n資料已即時同步至雲端伺服器。`);
+            alert(`【${type}打卡成功】\n時間：${timeStr}`);
         });
     }
 
-    // 4. 主管發布公告 / 提醒
+    // 6. 主管發布公告
     window.submitPost = function() {
         const type = document.getElementById('msg-type').value;
         const content = document.getElementById('msg-content').value.trim();
-        if (!content) { alert('發布內容不能為空喔！'); return; }
+        if (!content) { alert('請填寫內容！'); return; }
 
-        const post = {
+        push(ref(db, 'announcements'), {
             type: type,
             content: content,
             timestamp: Date.now()
-        };
-
-        push(ref(db, 'announcements'), post).then(() => {
-            alert('發布成功！');
+        }).then(() => {
+            alert('公告發布成功！');
             document.getElementById('msg-content').value = '';
         });
     }
 
-    // 5. 雲端即時數據監聽器
+    // 7. 即時雲端監聽
     function initDataListeners() {
-        // 監聽公告與提醒
+        // 公告監聽
         onValue(ref(db, 'announcements'), (snapshot) => {
             const listEl = document.getElementById('announcement-list');
             listEl.innerHTML = '';
             const data = snapshot.val();
-            if (!data) {
-                listEl.innerHTML = '<li class="info-item">目前沒有任何公告。</li>';
-                return;
-            }
+            if (!data) { listEl.innerHTML = '<li class="info-item">目前沒有任何公告。</li>'; return; }
             
-            // 轉成陣列並由新到舊排序
             const arr = Object.keys(data).map(k => data[k]).sort((a,b) => b.timestamp - a.timestamp);
             arr.forEach(item => {
                 const li = document.createElement('li');
@@ -292,29 +371,23 @@
             });
         });
 
-        // 監聽全公司打卡紀錄 (主管面版專用)
+        // 打卡紀錄監聽 (主管專屬)
         onValue(ref(db, 'clock_records'), (snapshot) => {
             allClockRecords = [];
             const tbody = document.getElementById('admin-table-body');
             tbody.innerHTML = '';
-            
             const data = snapshot.val();
-            if (!data) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8">尚無打卡歷史資料</td></tr>';
-                return;
-            }
+            if (!data) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">尚無打卡資料</td></tr>'; return; }
 
             Object.keys(data).forEach(k => allClockRecords.push(data[k]));
-            // 由新到舊排序
             allClockRecords.sort((a,b) => b.timestamp - a.timestamp);
 
-            // 如果是主管才渲染表格內容以節省資源
-            if (currentUser.role === 'admin') {
+            if (currentUserData.role === 'admin') {
                 allClockRecords.forEach(item => {
                     const tr = document.createElement('tr');
                     const badgeClass = item.type === '上班' ? 'badge-in' : 'badge-out';
                     tr.innerHTML = `
-                        <td><strong>${item.name}</strong> (${item.empId})</td>
+                        <td><strong>${item.name}</strong> (${item.empid})</td>
                         <td><span class="badge ${badgeClass}">${item.type}</span></td>
                         <td>${item.date}</td>
                         <td style="font-family:monospace; font-weight:bold;">${item.time}</td>
@@ -325,22 +398,26 @@
         });
     }
 
-    // 6. 主管匯出 CSV 報表
+    // 8. 匯出 CSV 報表
     window.exportCSV = function() {
-        if (allClockRecords.length === 0) { alert('資料庫目前沒有打卡紀錄可匯出'); return; }
+        if (allClockRecords.length === 0) { alert('無紀錄可匯出'); return; }
         let csv = "\uFEFF員工編號,員工姓名,動作,日期,時間\n";
         [...allClockRecords].reverse().forEach(item => {
-            csv += `"${item.empId}","${item.name}","${item.type}","${item.date}","${item.time}"\n`;
+            csv += `"${item.empid}","${item.name}","${item.type}","${item.date}","${item.time}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", `公司總打卡出勤報表_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute("download", `出勤報表_${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }
+
+    // 時鐘格式化
+    const now = new Date();
+    document.getElementById('current-date').innerText = now.toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' });
 </script>
 
 </body>
