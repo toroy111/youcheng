@@ -5,6 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>公司打卡管理系統</title>
     <style>
+        /* 員工專用導覽列樣式 */
+.user-nav {
+    display: flex;
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 6px;
+    margin-bottom: 25px;
+    gap: 5px;
+    overflow-x: auto;
+}
+.nav-tab {
+    flex: 1;
+    text-align: center;
+    padding: 12px 10px;
+    cursor: pointer;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #475569;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.nav-tab:hover {
+    background: rgba(37, 99, 235, 0.05);
+    color: var(--accent-color);
+}
+.nav-tab.active {
+    background: var(--accent-color);
+    color: white;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+/* 員工子分頁內容容器 */
+.tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+.tab-content.active {
+    display: block;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 公告欄特製樣式 */
+.announcement-card {
+    background: #fffbeb;
+    border-left: 4px solid #d97706;
+    padding: 15px;
+    border-radius: 4px 8px 8px 4px;
+    margin-bottom: 15px;
+}
+.announcement-card h4 { color: #b45309; margin-bottom: 5px; font-size: 15px; }
+.announcement-card p { font-size: 13px; color: #78350f; line-height: 1.5; }
         :root {
             --primary-color: #0f172a;
             --accent-color: #2563eb;
@@ -220,51 +275,110 @@ body {
     </div>
 </div>
 
-<div id="user-view" class="view-section card">
-    <h2>員工打卡回報系統</h2>
-    <p style="text-align:center; margin-bottom:20px; color:var(--accent-color);" id="user-welcome">歡迎回來</p>
+<div id="user-view" class="view-section card" style="max-width: 650px;">
     
-    <div class="form-group">
-        <label>外勤/打卡備註說明</label>
-        <textarea id="clock-note" rows="3" placeholder="例如：客戶端外勤、定點辦公回報..."></textarea>
-    </div>
-    
-    <button class="btn btn-success" id="btn-clock-in">🌅 上班簽到報到</button>
-    <button class="btn btn-danger" id="btn-clock-out">🌇 下班簽退離開</button>
-    
-    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
-    
-    <h3 style="font-size:16px; margin-bottom:10px;">線上請假申請單</h3>
-    <div class="form-group">
-        <label>假別類型</label>
-        <select id="leave-type">
-            <option value="事假">事假</option>
-            <option value="病假">病假</option>
-            <option value="特休">特休 / 年假</option>
-            <option value="喪假/婚假">喪假 / 婚假</option>
-        </select>
-    </div>
-    <div class="form-group">
-        <label>請假日期</label>
-        <input type="date" id="leave-date">
-    </div>
-    <div class="form-group">
-        <label>請假事由簡述</label>
-        <input type="text" id="leave-reason" placeholder="請輸入請假原因">
-    </div>
-    <button class="btn btn-primary" id="btn-leave-submit">📤 送出請假單申請</button>
-    
-    <button class="btn btn-logout" style="margin-top: 20px;" id="btn-user-logout">系統登出</button>
-</div>
-
-<div id="admin-view" class="view-section admin-container">
-    <div class="header">
-        <h1>人事行政後台 － 員工打卡紀錄登記表 <span id="admin-welcome" style="font-size:16px; color:var(--accent-color);"></span></h1>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
         <div>
-            <button class="btn btn-primary" id="btn-admin-export" style="width:auto; display:inline-block;">📥 匯出 Excel (CSV)</button>
-            <button class="btn btn-logout" id="btn-admin-logout" style="width:auto; display:inline-block; margin-left:10px;">安全登出</button>
+            <span style="font-size: 13px; color: #64748b; display: block;">企業同仁門戶</span>
+            <strong id="user-welcome" style="font-size: 18px; color: var(--primary-color);">歡迎回來</strong>
+        </div>
+        <button class="btn btn-logout" id="btn-user-logout" style="width: auto; margin-bottom: 0; padding: 8px 16px; font-size: 13px; border-radius: 8px;">系統登出</button>
+    </div>
+
+    <div class="user-nav">
+        <div class="nav-tab active" onclick="switchUserTab('tab-clock')">🌅 出勤打卡</div>
+        <div class="nav-tab" onclick="switchUserTab('tab-history')">📅 紀錄查詢</div>
+        <div class="nav-tab" onclick="switchUserTab('tab-expense')">💰 線上請款</div>
+        <div class="nav-tab" onclick="switchUserTab('tab-notice')">📢 內部公告</div>
+        <div class="nav-tab" onclick="switchUserTab('tab-leave')">🌴 請假申請</div>
+    </div>
+
+    <div id="tab-clock" class="tab-content active">
+        <div class="form-group">
+            <label>外勤/公出打卡備註說明</label>
+            <textarea id="clock-note" rows="3" placeholder="若有外勤、客戶端開會等特殊出勤狀況，請在此註記..."></textarea>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
+            <button class="btn btn-success" id="btn-clock-in" style="padding: 15px; font-size: 16px;">🌅 上班簽到</button>
+            <button class="btn btn-danger" id="btn-clock-out" style="padding: 15px; font-size: 16px;">🌇 下班簽退</button>
         </div>
     </div>
+
+    <div id="tab-history" class="tab-content">
+        <h3 style="font-size: 16px; margin-bottom: 15px; color: #1e293b;">您近期的雲端出勤回報紀錄</h3>
+        <div class="table-container" style="max-height: 300px; overflow-y: auto;">
+            <table style="font-size: 13px;">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>動態</th>
+                        <th>精準時間</th>
+                        <th>備註摘要</th>
+                    </tr>
+                </thead>
+                <tbody id="user-history-tbody">
+                    </tbody>
+            </table>
+            <div id="user-no-history" style="text-align:center; padding:30px; color:#94a3b8; display:none; font-style:italic;">目前尚無您的打卡歷史紀錄</div>
+        </div>
+    </div>
+
+    <div id="tab-expense" class="tab-content">
+        <h3 style="font-size: 16px; margin-bottom: 15px;">費用報支與請款申請單</h3>
+        <div class="form-group">
+            <label>請款項目名稱</label>
+            <input type="text" id="expense-title" placeholder="例如：文具採買、客戶聚餐代墊、計程車費">
+        </div>
+        <div class="form-group">
+            <label>請款總金額 (TWD)</label>
+            <input type="number" id="expense-amount" placeholder="請輸入純數字金額">
+        </div>
+        <div class="form-group">
+            <label>發票抬頭/憑證說明/收據明細連結</label>
+            <input type="text" id="expense-note" placeholder="備註統編或上傳雲端憑證網址">
+        </div>
+        <button class="btn btn-primary" id="btn-expense-submit" style="margin-top: 10px;">📤 送出費用請款單</button>
+    </div>
+
+    <div id="tab-notice" class="tab-content">
+        <h3 style="font-size: 16px; margin-bottom: 15px;">佈告欄最新公告</h3>
+        
+        <div class="announcement-card">
+            <h4>📢 人事公告：夏季連假出勤與值班調節說明</h4>
+            <p style="font-size: 11px; color:#92400e; margin-bottom:5px;">發布時間：2026-06-01</p>
+            <p>請全體同仁注意，因應端午連假調休，請款與打卡系統維護將於本週五晚間進行，如有不便敬請見諒。</p>
+        </div>
+        
+        <div class="announcement-card" style="border-left-color: #2563eb; background: #eff6ff;">
+            <h4 style="color: #1e40af;">💡 系統提示：請款憑證記得索取公司統一編號</h4>
+            <p style="font-size: 11px; color:#1e40af; margin-bottom:5px;">發布時間：2026-05-15</p>
+            <p>報支同仁請特別注意：所有報銷發票與收據，務必請商家開立公司正確抬頭與統編，否則財務部不予受理審核。</p>
+        </div>
+    </div>
+
+    <div id="tab-leave" class="tab-content">
+        <h3 style="font-size: 16px; margin-bottom: 15px;">線上請假申請單</h3>
+        <div class="form-group">
+            <label>假別類型</label>
+            <select id="leave-type">
+                <option value="事假">事假</option>
+                <option value="病假">病假</option>
+                <option value="特休">特休 / 年假</option>
+                <option value="喪假/婚假">喪假 / 婚假</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>請假日期</label>
+            <input type="date" id="leave-date">
+        </div>
+        <div class="form-group">
+            <label>請假事由簡述</label>
+            <input type="text" id="leave-reason" placeholder="請填寫具體原因">
+        </div>
+        <button class="btn btn-primary" id="btn-leave-submit">📤 送出請假單申請</button>
+    </div>
+
+</div>
 
     <div class="stats-grid">
         <div class="stat-card"><p>今日總登記次數</p><div class="number" id="total-count">0</div></div>
