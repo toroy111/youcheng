@@ -150,8 +150,8 @@
     <div class="header">
         <h1>人事行政後台 － 員工打卡紀錄登記表 <span id="admin-name" style="font-size:16px; color:var(--accent-color);"></span></h1>
         <div>
-            <button class="btn btn-export" onclick="exportToCSV()">📥 匯出 Excel (CSV)</button>
-            <button class="btn btn-logout" onclick="handleLogout()">回前台/登出</button>
+            <button class="btn btn-export" id="btn-export">📥 匯出 Excel (CSV)</button>
+            <button class="btn btn-logout" id="btn-logout">回前台/登出</button>
         </div>
     </div>
 
@@ -172,7 +172,7 @@
 
     <div class="toolbar">
         <h3 style="font-size: 18px; font-weight: 600;">歷史打卡流水帳 (Firebase 雲端即時連線)</h3>
-        <button class="btn btn-clear" onclick="clearRecords()">⚠️ 清空雲端所有歷史紀錄</button>
+        <button class="btn btn-clear" id="btn-clear">⚠️ 清空雲端所有歷史紀錄</button>
     </div>
 
     <div class="table-container">
@@ -198,7 +198,7 @@
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-   const firebaseConfig = {
+ const firebaseConfig = {
         apiKey: "AIzaSyDfTTRHfVCW-QpAPYuoDA4absfWO9OARcY", 
         authDomain: "youcheng-656a8.firebaseapp.com",
         databaseURL: "https://youcheng-656a8-default-rtdb.firebaseio.com",
@@ -206,16 +206,15 @@
         storageBucket: "youcheng-656a8.firebasestorage.app",
         messagingSenderId: "197356167437",
         appId: "1:197356167437:web:fa86347694f3ab592a5044"
-    }; // 👈 檢查這裡的 }; 有沒有漏掉，結尾要
+ };
+    
 
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // 💡【重要設定】請確保這裡的檔名跟你的前台打卡系統 HTML 檔名一模一樣（注意大小寫）
     const FRONTEND_PAGE = "index.html"; 
-
     let allMergedRecords = [];
 
     function dismissLoadingScreen() {
@@ -226,19 +225,17 @@
         }
     }
 
-    // ⭐ 修正後的安全驗證與彈出邏輯
+    // 安全驗證
     onAuthStateChanged(auth, (user) => {
         if (user) {
             onValue(ref(db, `users/${user.uid}`), (snapshot) => {
                 const userData = snapshot.val();
                 if (userData) {
                     if (userData.role === 'admin') {
-                        // 1. 權限正確，順利進入
                         document.getElementById('admin-name').innerText = `(${userData.name || '管理員'} 主管)`;
                         initCloudListeners();
                         dismissLoadingScreen();
                     } else {
-                        // 2. 權限錯誤：先強制解開轉圈圈，跳提示，再登出跳轉
                         dismissLoadingScreen();
                         setTimeout(() => {
                             alert('權限不足！您不是後台管理員，系統將自動登出並返回前台。');
@@ -248,13 +245,11 @@
                         }, 200);
                     }
                 } else {
-                    // 在 users 找不到資料的人
                     dismissLoadingScreen();
                     signOut(auth).then(() => { window.location.href = FRONTEND_PAGE; });
                 }
             }, { onlyOnce: true });
         } else {
-            // 3. 未登入者直接跳轉
             window.location.href = FRONTEND_PAGE;
         }
     });
@@ -342,16 +337,17 @@
         document.getElementById('checkout-count').innerText = outCount;
     }
 
-    window.clearRecords = function() {
+    // 💡 改用標準的 EventListener 進行事件監聽
+    document.getElementById('btn-clear').addEventListener('click', () => {
         if (confirm('確定要清空雲端資料庫上所有員工的打卡與請假紀錄嗎？此動作無法復原！')) {
             remove(ref(db, 'clock_records'))
                 .then(() => remove(ref(db, 'leave_records')))
                 .then(() => { alert('雲端歷史紀錄已成功清空！'); })
                 .catch(err => alert('清空失敗：' + err.message));
         }
-    }
+    });
 
-    window.exportToCSV = function() {
+    document.getElementById('btn-export').addEventListener('click', () => {
         if (allMergedRecords.length === 0) { alert('目前沒有資料可以匯出喔！'); return; }
         let csvContent = "\uFEFF員工姓名/編號,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
         [...allMergedRecords].reverse().forEach(item => {
@@ -370,13 +366,13 @@
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    }
+    });
 
-    window.handleLogout = function() {
+    document.getElementById('btn-logout').addEventListener('click', () => {
         const screen = document.getElementById('loading-screen');
         if(screen) { screen.style.display = 'flex'; screen.style.opacity = '1'; }
         signOut(auth).then(() => { window.location.href = FRONTEND_PAGE; });
-    }
+    });
 </script>
 
 </body>
