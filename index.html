@@ -109,7 +109,7 @@
 
 <div id="auth-view">
     <div class="auth-card">
-        <h1>GoFace 雲端管理</h1>
+        <h1>佑誠工程行</h1>
         <div class="form-group"><label>企業電子郵件</label><input type="email" id="auth-email" placeholder="example@company.com"></div>
         <div id="reg-fields" style="display: none;">
             <div class="form-group"><label>真實姓名</label><input type="text" id="auth-name"></div>
@@ -199,7 +199,42 @@
             </div>
         </section>
 
-        <section id="page-leave" class="content-section"><div class="page-header"><h2>請假申請單</h2></div><div class="card"><p>請假模組連線中...</p></div></section>
+        <section id="page-leave" class="content-section">
+    <div class="page-header">
+        <div>
+            <h2>線上請假申請</h2>
+            <p>Leave Application</p>
+        </div>
+    </div>
+    
+    <div class="card" style="max-width: 500px; margin: 0;">
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 700; color: #475569;">請假假別</label>
+            <select id="leave-type" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: white;">
+                <option value="事假">事假 (無薪)</option>
+                <option value="病假">病假 (半薪)</option>
+                <option value="特休">特休 / 年假</option>
+                <option value="婚假">婚假</option>
+                <option value="喪假">喪假</option>
+                <option value="公假">公假</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 700; color: #475569;">請假日期</label>
+            <input type="date" id="leave-date" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px;">
+        </div>
+
+        <div class="form-group" style="margin-bottom: 25px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 700; color: #475569;">請假事由與說明</label>
+            <textarea id="leave-reason" rows="4" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; resize: none;" placeholder="請詳細填寫請假原因或職務代理人註記..."></textarea>
+        </div>
+
+        <button class="btn-auth" id="btn-leave-submit" style="background: linear-gradient(135deg, #0088cc 0%, #006699 100%); color: white; border: none; font-weight: bold; width: 100%; padding: 14px; border-radius: 8px; cursor: pointer;">
+            <i class="fa-paper-plane far" style="margin-right: 8px;"></i> 送出請假申請單
+        </button>
+    </div>
+</section><div class="page-header"><h2>請假申請單</h2></div><div class="card"><p>請假模組連線中...</p></div></section>
         <section id="page-expense" class="content-section"><div class="page-header"><h2>費用請款申請</h2></div><div class="card"><p>請款功能開發中...</p></div></section>
         <section id="page-admin-data" class="content-section"><div class="page-header"><h2>全公司即時流水帳</h2></div><div class="card"><table><thead><tr><th>姓名</th><th>類型</th><th>日期</th><th>精準時間</th><th>備註</th></tr></thead><tbody id="admin-full-tbody"></tbody></table></div></section>
 
@@ -290,6 +325,62 @@
     });
 
     // --- 打卡功能 ---
+    // --- 線上請假單送出功能 ---
+    document.getElementById('btn-leave-submit').addEventListener('click', () => {
+        // 安全檢查：防範使用者尚未登入成功
+        if (!currentUserProfile) {
+            alert('系統錯誤：找不到當前登入的使用者資訊！');
+            return;
+        }
+
+        const leaveType = document.getElementById('leave-type').value;
+        const leaveDate = document.getElementById('leave-date').value;
+        const leaveReason = document.getElementById('leave-reason').value.trim();
+
+        // 欄位防呆驗證
+        if (!leaveDate) {
+            alert('請選擇您要請假的日期！');
+            return;
+        }
+        if (!leaveReason) {
+            alert('請填寫具體的請假事由！');
+            return;
+        }
+
+        // 封裝請假資料物件
+        const leaveRecord = {
+            name: currentUserProfile.name,
+            email: currentUserProfile.email,
+            type: "請假申請",
+            leaveType: leaveType,
+            date: leaveDate,
+            reason: leaveReason,
+            status: "待審核", // 預設狀態為待審核，留給主管未來簽核
+            applyDate: new Date().toISOString().split('T')[0], // 申請填單日期
+            timestamp: Date.now()
+        };
+
+        // 啟動全螢幕 Loading
+        showLoading(true);
+
+        // 將請假單推送到 Firebase 的 'leave_records' 節點
+        push(ref(db, 'leave_records'), leaveRecord)
+            .then(() => {
+                showLoading(false);
+                alert(`🎉 請假申請已成功送出！\n假別：${leaveType}\n日期：${leaveDate}\n請靜待主管審核。`);
+                
+                // 成功後清空輸入表單
+                document.getElementById('leave-date').value = '';
+                document.getElementById('leave-reason').value = '';
+                
+                // 自動導回系統總覽首頁
+                navTo('home');
+            })
+            .catch(err => {
+                showLoading(false);
+                alert('請假單送出失敗，錯誤訊息：' + err.message);
+            });
+    });
     function handleClock(type) {
         const note = document.getElementById('clock-note').value;
         const now = new Date();
@@ -313,6 +404,13 @@
         onValue(ref(db, 'clock_records'), (snapshot) => {
             const data = snapshot.val() || {};
             const list = Object.values(data).sort((a,b) => b.timestamp - a.timestamp);
+
+            // 初始化時，自動將請假日期的欄位預設填入「今天」
+    const todayStr = new Date().toISOString().split('T')[0];
+    const leaveDateInput = document.getElementById('leave-date');
+    if (leaveDateInput) {
+        leaveDateInput.value = todayStr;
+    }
             
             // 渲染全公司 (主管看)
             const adminTbody = document.getElementById('admin-full-tbody');
