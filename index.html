@@ -63,6 +63,114 @@
 
         /* 核心控制：用來切換畫面的 Class */
         .view-section { display: none; }
+        /* 全螢幕背景與重設 */
+body {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    background-size: cover;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* 重新打造的登入卡片 */
+.auth-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    padding: 40px;
+    width: 100%;
+    max-width: 460px;
+    margin: 0 auto;
+    transition: all 0.3s ease;
+}
+
+/* 公司名稱與標題區 */
+.company-brand {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.company-brand h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #1e3a8a;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+}
+.company-brand p {
+    font-size: 13px;
+    color: #64748b;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* 輸入框優化 */
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #334155;
+}
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #1e293b;
+    background-color: #f8fafc;
+    transition: all 0.2s ease;
+}
+.form-group input:focus, .form-group select:focus {
+    border-color: #2563eb;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+    outline: none;
+}
+
+/* 企業級漸層按鈕 */
+.btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    transition: all 0.2s ease;
+    margin-top: 15px;
+}
+.btn-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+}
+.btn-submit:active {
+    transform: translateY(1px);
+}
+
+/* 切換文字按鈕 */
+.toggle-link {
+    text-align: center;
+    font-size: 14px;
+    color: #64748b;
+    cursor: pointer;
+    margin-top: 20px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+.toggle-link:hover {
+    color: #2563eb;
+    text-decoration: underline;
+}
     </style>
 </head>
 <body>
@@ -72,32 +180,37 @@
     <div style="color: #64748b; font-size: 14px; font-weight: 600;">雲端安全連線驗證中...</div>
 </div>
 
-<div id="auth-view" class="view-section card" style="display: block;">
-    <h2 id="auth-title">員工/主管登入系統</h2>
+<div id="auth-view" class="view-section auth-card" style="display: block;">
     
-    <div class="form-group" id="reg-name-group" style="display: none;">
-        <label>真實姓名</label>
-        <input type="text" id="auth-name" placeholder="請輸入姓名">
+    <div class="company-brand">
+        <h1 id="company-name">有成實業有限公司</h1>
+        <p id="auth-title">雲端智能人事管理系統</p>
     </div>
-    <div class="form-group" id="reg-role-group" style="display: none;">
+    
+    <div class="form-group" id="reg-name-group" style="display: none; margin-bottom: 20px;">
+        <label>真實姓名</label>
+        <input type="text" id="auth-name" placeholder="請輸入您的真實姓名">
+    </div>
+    <div class="form-group" id="reg-role-group" style="display: none; margin-bottom: 20px;">
         <label>申請權限身分</label>
         <select id="auth-role">
-            <option value="user">一般員工 (僅能打卡)</option>
-            <option value="admin">人事主管 (可看管理後台)</option>
+            <option value="user">一般同仁 (僅開放出勤打卡)</option>
+            <option value="admin">人事主管 (開放後台管理數據)</option>
         </select>
     </div>
 
-    <div class="form-group">
-        <label>電子郵件 (Email)</label>
+    <div class="form-group" style="margin-bottom: 20px;">
+        <label>企業電子郵件 (Email)</label>
         <input type="email" id="auth-email" placeholder="example@company.com">
     </div>
-    <div class="form-group">
-        <label>密碼</label>
-        <input type="password" id="auth-password" placeholder="請輸入密碼">
+    <div class="form-group" style="margin-bottom: 25px;">
+        <label>登入密碼</label>
+        <input type="password" id="auth-password" placeholder="請輸入 6 碼以上密碼">
     </div>
 
-    <button class="btn btn-primary" id="btn-auth-submit">登入</button>
-    <p style="text-align: center; font-size: 14px; color: #64748b; cursor: pointer; margin-top: 10px;" id="btn-toggle-view">沒有帳號？點此切換至註冊</p>
+    <button class="btn-submit" id="btn-auth-submit">安全登入系統</button>
+    
+    <p class="toggle-link" id="btn-toggle-view">首次使用？點此申請員工帳號</p>
 </div>
 
 <div id="user-view" class="view-section card">
