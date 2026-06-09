@@ -234,7 +234,7 @@
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value;
 
-            if (!name || !empid || !email || !password) { alert('請填寫所有欄位！'); return; }
+    if (!name || !empid || !email || !password) { alert('請填寫所有欄位！'); return; }
             
             // 雲端註冊帳號
             createUserWithEmailAndPassword(auth, email, password)
