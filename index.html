@@ -5,61 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>公司打卡管理系統</title>
     <style>
-        /* 員工專用導覽列樣式 */
-.user-nav {
-    display: flex;
-    background: #f1f5f9;
-    border-radius: 10px;
-    padding: 6px;
-    margin-bottom: 25px;
-    gap: 5px;
-    overflow-x: auto;
-}
-.nav-tab {
-    flex: 1;
-    text-align: center;
-    padding: 12px 10px;
-    cursor: pointer;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    color: #475569;
-    transition: all 0.2s ease;
-    white-space: nowrap;
-}
-.nav-tab:hover {
-    background: rgba(37, 99, 235, 0.05);
-    color: var(--accent-color);
-}
-.nav-tab.active {
-    background: var(--accent-color);
-    color: white;
-    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
-}
-
-/* 員工子分頁內容容器 */
-.tab-content {
-    display: none;
-    animation: fadeIn 0.3s ease;
-}
-.tab-content.active {
-    display: block;
-}
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* 公告欄特製樣式 */
-.announcement-card {
-    background: #fffbeb;
-    border-left: 4px solid #d97706;
-    padding: 15px;
-    border-radius: 4px 8px 8px 4px;
-    margin-bottom: 15px;
-}
-.announcement-card h4 { color: #b45309; margin-bottom: 5px; font-size: 15px; }
-.announcement-card p { font-size: 13px; color: #78350f; line-height: 1.5; }
         :root {
             --primary-color: #0f172a;
             --accent-color: #2563eb;
@@ -118,114 +63,6 @@
 
         /* 核心控制：用來切換畫面的 Class */
         .view-section { display: none; }
-        /* 全螢幕背景與重設 */
-body {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-    background-size: cover;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-
-/* 重新打造的登入卡片 */
-.auth-card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    padding: 40px;
-    width: 100%;
-    max-width: 460px;
-    margin: 0 auto;
-    transition: all 0.3s ease;
-}
-
-/* 公司名稱與標題區 */
-.company-brand {
-    text-align: center;
-    margin-bottom: 30px;
-}
-.company-brand h1 {
-    font-size: 26px;
-    font-weight: 800;
-    color: #1e3a8a;
-    letter-spacing: 2px;
-    margin-bottom: 6px;
-}
-.company-brand p {
-    font-size: 13px;
-    color: #64748b;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* 輸入框優化 */
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    color: #334155;
-}
-.form-group input, .form-group select {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    font-size: 15px;
-    color: #1e293b;
-    background-color: #f8fafc;
-    transition: all 0.2s ease;
-}
-.form-group input:focus, .form-group select:focus {
-    border-color: #2563eb;
-    background-color: #ffffff;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
-    outline: none;
-}
-
-/* 企業級漸層按鈕 */
-.btn-submit {
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-    transition: all 0.2s ease;
-    margin-top: 15px;
-}
-.btn-submit:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
-    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-}
-.btn-submit:active {
-    transform: translateY(1px);
-}
-
-/* 切換文字按鈕 */
-.toggle-link {
-    text-align: center;
-    font-size: 14px;
-    color: #64748b;
-    cursor: pointer;
-    margin-top: 20px;
-    font-weight: 500;
-    transition: color 0.2s;
-}
-.toggle-link:hover {
-    color: #2563eb;
-    text-decoration: underline;
-}
     </style>
 </head>
 <body>
@@ -235,150 +72,79 @@ body {
     <div style="color: #64748b; font-size: 14px; font-weight: 600;">雲端安全連線驗證中...</div>
 </div>
 
-<div id="auth-view" class="view-section auth-card" style="display: block;">
+<div id="auth-view" class="view-section card" style="display: block;">
+    <h2 id="auth-title">員工/主管登入系統</h2>
     
-    <div class="company-brand">
-        <h1 id="company-name">佑誠工程行</h1>
-        <p id="auth-title">雲端智能人事管理系統</p>
-    </div>
-    
-    <div class="form-group" id="reg-name-group" style="display: none; margin-bottom: 20px;">
+    <div class="form-group" id="reg-name-group" style="display: none;">
         <label>真實姓名</label>
-        <input type="text" id="auth-name" placeholder="請輸入您的真實姓名">
+        <input type="text" id="auth-name" placeholder="請輸入姓名">
     </div>
-    <div class="form-group" id="reg-role-group" style="display: none; margin-bottom: 20px;">
+    <div class="form-group" id="reg-role-group" style="display: none;">
         <label>申請權限身分</label>
         <select id="auth-role">
-            <option value="user">一般同仁 (僅開放出勤打卡)</option>
-            <option value="admin">人事主管 (開放後台管理數據)</option>
+            <option value="user">一般員工 (僅能打卡)</option>
+            <option value="admin">人事主管 (可看管理後台)</option>
         </select>
     </div>
 
-    <div class="form-group" style="margin-bottom: 20px;">
-        <label>企業電子郵件 (Email)</label>
+    <div class="form-group">
+        <label>電子郵件 (Email)</label>
         <input type="email" id="auth-email" placeholder="example@company.com">
     </div>
-
-    <div class="form-group" id="auth-password-group" style="margin-bottom: 25px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin-bottom: 0;">登入密碼</label>
-            <span id="btn-goto-forgot" style="font-size: 13px; color: #2563eb; cursor: pointer; font-weight: 500;">忘記密碼？</span>
-        </div>
-        <input type="password" id="auth-password" placeholder="請輸入 6 碼以上密碼">
+    <div class="form-group">
+        <label>密碼</label>
+        <input type="password" id="auth-password" placeholder="請輸入密碼">
     </div>
 
-    <button class="btn-submit" id="btn-auth-submit">安全登入系統</button>
-    
-    <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 20px;">
-        <p class="toggle-link" id="btn-toggle-view" style="margin-top: 0;">首次使用？點此申請員工帳號</p>
-        <p class="toggle-link" id="btn-back-to-login" style="display: none; margin-top: 0; color: #ef4444; font-weight: bold;">← 返回登入畫面</p>
-    </div>
+    <button class="btn btn-primary" id="btn-auth-submit">登入</button>
+    <p style="text-align: center; font-size: 14px; color: #64748b; cursor: pointer; margin-top: 10px;" id="btn-toggle-view">沒有帳號？點此切換至註冊</p>
 </div>
 
-<div id="user-view" class="view-section card" style="max-width: 650px;">
+<div id="user-view" class="view-section card">
+    <h2>員工打卡回報系統</h2>
+    <p style="text-align:center; margin-bottom:20px; color:var(--accent-color);" id="user-welcome">歡迎回來</p>
     
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;">
+    <div class="form-group">
+        <label>外勤/打卡備註說明</label>
+        <textarea id="clock-note" rows="3" placeholder="例如：客戶端外勤、定點辦公回報..."></textarea>
+    </div>
+    
+    <button class="btn btn-success" id="btn-clock-in">🌅 上班簽到報到</button>
+    <button class="btn btn-danger" id="btn-clock-out">🌇 下班簽退離開</button>
+    
+    <hr style="margin: 20px 0; border: none; border-top: 1px solid var(--border-color);">
+    
+    <h3 style="font-size:16px; margin-bottom:10px;">線上請假申請單</h3>
+    <div class="form-group">
+        <label>假別類型</label>
+        <select id="leave-type">
+            <option value="事假">事假</option>
+            <option value="病假">病假</option>
+            <option value="特休">特休 / 年假</option>
+            <option value="喪假/婚假">喪假 / 婚假</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>請假日期</label>
+        <input type="date" id="leave-date">
+    </div>
+    <div class="form-group">
+        <label>請假事由簡述</label>
+        <input type="text" id="leave-reason" placeholder="請輸入請假原因">
+    </div>
+    <button class="btn btn-primary" id="btn-leave-submit">📤 送出請假單申請</button>
+    
+    <button class="btn btn-logout" style="margin-top: 20px;" id="btn-user-logout">系統登出</button>
+</div>
+
+<div id="admin-view" class="view-section admin-container">
+    <div class="header">
+        <h1>人事行政後台 － 員工打卡紀錄登記表 <span id="admin-welcome" style="font-size:16px; color:var(--accent-color);"></span></h1>
         <div>
-            <span style="font-size: 13px; color: #64748b; display: block;">企業同仁門戶</span>
-            <strong id="user-welcome" style="font-size: 18px; color: var(--primary-color);">歡迎回來</strong>
-        </div>
-        <button class="btn btn-logout" id="btn-user-logout" style="width: auto; margin-bottom: 0; padding: 8px 16px; font-size: 13px; border-radius: 8px;">系統登出</button>
-    </div>
-
-    <div class="user-nav">
-        <div class="nav-tab active" onclick="switchUserTab('tab-clock')">🌅 出勤打卡</div>
-        <div class="nav-tab" onclick="switchUserTab('tab-history')">📅 紀錄查詢</div>
-        <div class="nav-tab" onclick="switchUserTab('tab-expense')">💰 線上請款</div>
-        <div class="nav-tab" onclick="switchUserTab('tab-notice')">📢 內部公告</div>
-        <div class="nav-tab" onclick="switchUserTab('tab-leave')">🌴 請假申請</div>
-    </div>
-
-    <div id="tab-clock" class="tab-content active">
-        <div class="form-group">
-            <label>外勤/公出打卡備註說明</label>
-            <textarea id="clock-note" rows="3" placeholder="若有外勤、客戶端開會等特殊出勤狀況，請在此註記..."></textarea>
-        </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px;">
-            <button class="btn btn-success" id="btn-clock-in" style="padding: 15px; font-size: 16px;">🌅 上班簽到</button>
-            <button class="btn btn-danger" id="btn-clock-out" style="padding: 15px; font-size: 16px;">🌇 下班簽退</button>
+            <button class="btn btn-primary" id="btn-admin-export" style="width:auto; display:inline-block;">📥 匯出 Excel (CSV)</button>
+            <button class="btn btn-logout" id="btn-admin-logout" style="width:auto; display:inline-block; margin-left:10px;">安全登出</button>
         </div>
     </div>
-
-    <div id="tab-history" class="tab-content">
-        <h3 style="font-size: 16px; margin-bottom: 15px; color: #1e293b;">您近期的雲端出勤回報紀錄</h3>
-        <div class="table-container" style="max-height: 300px; overflow-y: auto;">
-            <table style="font-size: 13px;">
-                <thead>
-                    <tr>
-                        <th>日期</th>
-                        <th>動態</th>
-                        <th>精準時間</th>
-                        <th>備註摘要</th>
-                    </tr>
-                </thead>
-                <tbody id="user-history-tbody">
-                    </tbody>
-            </table>
-            <div id="user-no-history" style="text-align:center; padding:30px; color:#94a3b8; display:none; font-style:italic;">目前尚無您的打卡歷史紀錄</div>
-        </div>
-    </div>
-
-    <div id="tab-expense" class="tab-content">
-        <h3 style="font-size: 16px; margin-bottom: 15px;">費用報支與請款申請單</h3>
-        <div class="form-group">
-            <label>請款項目名稱</label>
-            <input type="text" id="expense-title" placeholder="例如：文具採買、客戶聚餐代墊、計程車費">
-        </div>
-        <div class="form-group">
-            <label>請款總金額 (TWD)</label>
-            <input type="number" id="expense-amount" placeholder="請輸入純數字金額">
-        </div>
-        <div class="form-group">
-            <label>發票抬頭/憑證說明/收據明細連結</label>
-            <input type="text" id="expense-note" placeholder="備註統編或上傳雲端憑證網址">
-        </div>
-        <button class="btn btn-primary" id="btn-expense-submit" style="margin-top: 10px;">📤 送出費用請款單</button>
-    </div>
-
-    <div id="tab-notice" class="tab-content">
-        <h3 style="font-size: 16px; margin-bottom: 15px;">佈告欄最新公告</h3>
-        
-        <div class="announcement-card">
-            <h4>📢 人事公告：夏季連假出勤與值班調節說明</h4>
-            <p style="font-size: 11px; color:#92400e; margin-bottom:5px;">發布時間：2026-06-01</p>
-            <p>請全體同仁注意，因應端午連假調休，請款與打卡系統維護將於本週五晚間進行，如有不便敬請見諒。</p>
-        </div>
-        
-        <div class="announcement-card" style="border-left-color: #2563eb; background: #eff6ff;">
-            <h4 style="color: #1e40af;">💡 系統提示：請款憑證記得索取公司統一編號</h4>
-            <p style="font-size: 11px; color:#1e40af; margin-bottom:5px;">發布時間：2026-05-15</p>
-            <p>報支同仁請特別注意：所有報銷發票與收據，務必請商家開立公司正確抬頭與統編，否則財務部不予受理審核。</p>
-        </div>
-    </div>
-
-    <div id="tab-leave" class="tab-content">
-        <h3 style="font-size: 16px; margin-bottom: 15px;">線上請假申請單</h3>
-        <div class="form-group">
-            <label>假別類型</label>
-            <select id="leave-type">
-                <option value="事假">事假</option>
-                <option value="病假">病假</option>
-                <option value="特休">特休 / 年假</option>
-                <option value="喪假/婚假">喪假 / 婚假</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>請假日期</label>
-            <input type="date" id="leave-date">
-        </div>
-        <div class="form-group">
-            <label>請假事由簡述</label>
-            <input type="text" id="leave-reason" placeholder="請填寫具體原因">
-        </div>
-        <button class="btn btn-primary" id="btn-leave-submit">📤 送出請假單申請</button>
-    </div>
-
-</div>
 
     <div class="stats-grid">
         <div class="stat-card"><p>今日總登記次數</p><div class="number" id="total-count">0</div></div>
@@ -410,22 +176,11 @@ body {
 </div>
 
 <script type="module">
-    // 提供 HTML onclick 呼叫的 Tab 切換函數
-window.switchUserTab = function(tabId) {
-    // 切換按鈕的 Active 狀態
-    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-    event.currentTarget.classList.add('active');
-    
-    // 切換內容的 Active 狀態
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-}
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    // 🌟 第一步修改：這裡已經幫你補上 sendPasswordResetEmail 了！
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // 🌟 請對照並維持你原本的 Firebase 設定
+    // 🌟 請對照你的 Firebase 設定
     const firebaseConfig = {
         apiKey: "AIzaSyDfTTRHfVCW-QpAPYuoDA4absfWO9OARcY", 
         authDomain: "youcheng-656a8.firebaseapp.com",
@@ -440,12 +195,11 @@ window.switchUserTab = function(tabId) {
     const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // 🌟 第二步修改：切換狀態控制機制
-    let currentMode = 'login'; // 核心狀態：'login' (登入), 'register' (註冊), 'forgot' (忘記密碼)
+    let isLoginMode = true; // 控制登入/註冊模式切换
     let allMergedRecords = [];
     let currentUserProfile = null;
 
-    // 輔助功能：控制全螢幕載入遮罩
+    // 輔助功能：控制畫面遮罩
     function showLoading(show) {
         const screen = document.getElementById('loading-screen');
         if (!screen) return;
@@ -456,7 +210,7 @@ window.switchUserTab = function(tabId) {
         }
     }
 
-    // 核心 SPA 機制：切換大畫面
+    // 核心 SPA 機制：根據身分切換顯示對應區塊
     function switchView(viewName) {
         document.querySelectorAll('.view-section').forEach(el => el.style.display = 'none');
         if (viewName === 'auth') {
@@ -468,70 +222,25 @@ window.switchUserTab = function(tabId) {
         }
     }
 
-    // 🌟 核心切換：控制登入卡片內部的「三個模式」UI 顯示與隱藏
-    function updateAuthUI(mode) {
-        currentMode = mode;
-        
-        const titleEl = document.getElementById('auth-title');
-        const submitBtn = document.getElementById('btn-auth-submit');
-        const toggleLink = document.getElementById('btn-toggle-view');
-        const backBtn = document.getElementById('btn-back-to-login');
-        
-        const nameGroup = document.getElementById('reg-name-group');
-        const roleGroup = document.getElementById('reg-role-group');
-        const passwordGroup = document.getElementById('auth-password-group');
-
-        if (mode === 'login') {
-            titleEl.innerText = "雲端智能人事管理系統";
-            submitBtn.innerText = "安全登入系統";
-            toggleLink.innerText = "首次使用？點此申請員工帳號";
-            toggleLink.style.display = "block";
-            backBtn.style.display = "none";
-            
-            nameGroup.style.display = "none";
-            roleGroup.style.display = "none";
-            passwordGroup.style.display = "block";
-        } 
-        else if (mode === 'register') {
-            titleEl.innerText = "新同仁帳號權限申請";
-            submitBtn.innerText = "送出申請並創立帳號";
-            toggleLink.innerText = "已有帳號？返回登入系統";
-            toggleLink.style.display = "block";
-            backBtn.style.display = "none";
-            
-            nameGroup.style.display = "block";
-            roleGroup.style.display = "block";
-            passwordGroup.style.display = "block";
-        } 
-        else if (mode === 'forgot') {
-            titleEl.innerText = "重設帳號密碼中心";
-            submitBtn.innerText = "發送密碼重設驗證信";
-            toggleLink.style.display = "none"; 
-            backBtn.style.display = "block";   
-            
-            nameGroup.style.display = "none";
-            roleGroup.style.display = "none";
-            passwordGroup.style.display = "none"; // 找回密碼不需要輸入密碼框，隱藏它！
-        }
-    }
-
     // ==========================================
     // 🔐 身分驗證監聽 (核心分流點)
     // ==========================================
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            // 已登入，去資料庫查這個人的 role 權限
             onValue(ref(db, `users/${user.uid}`), (snapshot) => {
                 const userData = snapshot.val();
                 if (userData) {
                     currentUserProfile = userData;
                     if (userData.role === 'admin') {
+                        // 主管：切換到後台介面
                         document.getElementById('admin-welcome').innerText = `(${userData.name || '管理員'} 主管)`;
                         initAdminCloudListeners();
                         switchView('admin');
                     } else {
+                        // 員工：切換到打卡介面
                         document.getElementById('user-welcome').innerText = `歡迎回來，${userData.name || '同仁'}`;
                         switchView('user');
-                        initUserHistoryListener(userData.email);
                     }
                 } else {
                     alert('找不到您的帳號身分資料，請重新註冊。');
@@ -540,56 +249,44 @@ window.switchUserTab = function(tabId) {
                 showLoading(false);
             }, { onlyOnce: true });
         } else {
+            // 未登入，一律顯示登入介面
             currentUserProfile = null;
-            updateAuthUI('login'); // 沒登入時，預設顯示登入狀態
             switchView('auth');
             showLoading(false);
         }
     });
 
     // ==========================================
-    // ✍️ 登入卡片內的點擊事件綁定
+    // ✍️ 登入 與 註冊 按鈕邏輯
     // ==========================================
-    
-    // 點選「忘記密碼？」文字
-    document.getElementById('btn-goto-forgot').addEventListener('click', () => {
-        updateAuthUI('forgot');
-    });
-
-    // 點選「← 返回登入畫面」文字
-    document.getElementById('btn-back-to-login').addEventListener('click', () => {
-        updateAuthUI('login');
-    });
-
-    // 登入與註冊的互相切換按鈕
     document.getElementById('btn-toggle-view').addEventListener('click', () => {
-        if (currentMode === 'login') {
-            updateAuthUI('register');
-        } else {
-            updateAuthUI('login');
-        }
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "員工/主管登入系統" : "新員工/主管帳號註冊";
+        document.getElementById('btn-auth-submit').innerText = isLoginMode ? "登入" : "註冊並創立帳號";
+        document.getElementById('btn-toggle-view').innerText = isLoginMode ? "沒有帳號？點此切換至註冊" : "已有帳號？點此切換至登入";
+        document.getElementById('reg-name-group').style.display = isLoginMode ? 'none' : 'block';
+        document.getElementById('reg-role-group').style.display = isLoginMode ? 'none' : 'block';
     });
 
-    // 核心大按鈕送出（依狀態分流：登入 / 註冊 / 忘記密碼信）
     document.getElementById('btn-auth-submit').addEventListener('click', () => {
         const email = document.getElementById('auth-email').value.trim();
         const password = document.getElementById('auth-password').value.trim();
         const name = document.getElementById('auth-name').value.trim();
         const role = document.getElementById('auth-role').value;
 
-        if (!email) { alert('請填寫電子郵件 Email！'); return; }
+        if (!email || !password) { alert('請填寫完整 Email 與密碼！'); return; }
 
-        if (currentMode === 'login') {
-            if (!password) { alert('請填寫密碼！'); return; }
-            showLoading(true);
+        showLoading(true);
+        if (isLoginMode) {
+            // 登入
             signInWithEmailAndPassword(auth, email, password)
                 .catch(err => { showLoading(false); alert('登入失敗：' + err.message); });
-                
-        } else if (currentMode === 'register') {
-            if (!password || !name) { alert('請填寫完整姓名與密碼！'); return; }
-            showLoading(true);
+        } else {
+            // 註冊
+            if (!name) { showLoading(false); alert('註冊請務必填寫真實姓名！'); return; }
             createUserWithEmailAndPassword(auth, email, password)
                 .then((cred) => {
+                    // 同步寫入 users 節點設定權限
                     return set(ref(db, `users/${cred.user.uid}`), {
                         name: name,
                         email: email,
@@ -599,20 +296,6 @@ window.switchUserTab = function(tabId) {
                 })
                 .then(() => { alert('註冊成功！系統已為您自動導向。'); })
                 .catch(err => { showLoading(false); alert('註冊失敗：' + err.message); });
-                
-        } else if (currentMode === 'forgot') {
-            showLoading(true);
-            // 執行 Firebase 密碼重設信件發送
-            sendPasswordResetEmail(auth, email)
-                .then(() => {
-                    showLoading(false);
-                    alert(`重設密碼驗證信已成功發送到：\n${email}\n\n請至您的信箱收取郵件，點擊信中連結設定新密碼！`);
-                    updateAuthUI('login'); // 寄成功後，自動幫他轉回登入畫面
-                })
-                .catch(err => {
-                    showLoading(false);
-                    alert('發送失敗：' + err.message);
-                });
         }
     });
 
@@ -621,6 +304,7 @@ window.switchUserTab = function(tabId) {
     // ==========================================
     function handleClock(type) {
         if (!currentUserProfile) return;
+        const note = document.getElementById('clock-note').value.trim();
         const now = new Date();
         
         const newRecord = {
@@ -630,7 +314,7 @@ window.switchUserTab = function(tabId) {
             date: now.toISOString().split('T')[0],
             time: now.toTimeString().split(' ')[0],
             timestamp: Date.now(),
-            note: "定點辦公回報"
+            note: note || "無備註"
         };
 
         showLoading(true);
@@ -638,12 +322,40 @@ window.switchUserTab = function(tabId) {
             .then(() => {
                 showLoading(false);
                 alert(`【${type}】打卡回報雲端成功！`);
+                document.getElementById('clock-note').value = '';
             })
             .catch(err => { showLoading(false); alert('打卡失敗：' + err.message); });
     }
 
     document.getElementById('btn-clock-in').addEventListener('click', () => handleClock('上班'));
     document.getElementById('btn-clock-out').addEventListener('click', () => handleClock('下班'));
+
+    document.getElementById('btn-leave-submit').addEventListener('click', () => {
+        if (!currentUserProfile) return;
+        const type = document.getElementById('leave-type').value;
+        const date = document.getElementById('leave-date').value;
+        const reason = document.getElementById('leave-reason').value.trim();
+
+        if (!date || !reason) { alert('請填寫請假日期與事由！'); return; }
+
+        const leaveRecord = {
+            name: currentUserProfile.name,
+            email: currentUserProfile.email,
+            type: type,
+            date: date,
+            reason: reason,
+            timestamp: Date.now()
+        };
+
+        showLoading(true);
+        push(ref(db, 'leave_records'), leaveRecord)
+            .then(() => {
+                showLoading(false);
+                alert('請假單已雲端送出，等待審核中。');
+                document.getElementById('leave-reason').value = '';
+            })
+            .catch(err => { showLoading(false); alert('申請失敗：' + err.message); });
+    });
 
     // ==========================================
     // 📊 主管功能：即時監聽與報表
@@ -652,6 +364,10 @@ window.switchUserTab = function(tabId) {
         let clockData = {}, leaveData = {};
         onValue(ref(db, 'clock_records'), (snapshot) => {
             clockData = snapshot.val() || {};
+            renderAdminTable(clockData, leaveData);
+        });
+        onValue(ref(db, 'leave_records'), (snapshot) => {
+            leaveData = snapshot.val() || {};
             renderAdminTable(clockData, leaveData);
         });
     }
@@ -669,161 +385,97 @@ window.switchUserTab = function(tabId) {
             }
         });
 
+        Object.keys(leaves).forEach(k => {
+            let item = leaves[k];
+            if (item) allMergedRecords.push({ ...item, recordType: 'leave' });
+        });
+
         allMergedRecords.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
         
         const tbody = document.getElementById('data-table-body');
         const noDataMsg = document.getElementById('no-data-msg');
-        
-        if (!tbody) return;
         tbody.innerHTML = '';
 
         if (allMergedRecords.length === 0) {
-            if (noDataMsg) noDataMsg.style.display = 'block';
+            noDataMsg.style.display = 'block';
+            document.getElementById('total-count').innerText = 0;
+            document.getElementById('checkin-count').innerText = 0;
+            document.getElementById('checkout-count').innerText = 0;
             return;
         }
-        if (noDataMsg) noDataMsg.style.display = 'none';
+        noDataMsg.style.display = 'none';
 
         allMergedRecords.forEach(item => {
             const tr = document.createElement('tr');
-            const badgeClass = item.type === '上班' ? 'badge-in' : 'badge-out';
+            let typeBadge = '', detail = '', note = '';
+
+            if (item.recordType === 'clock') {
+                const badgeClass = item.type === '上班' ? 'badge-in' : 'badge-out';
+                typeBadge = `<span class="badge ${badgeClass}">${item.type}</span>`;
+                detail = `<span style="font-family:monospace; font-weight:bold;">${item.time || ''}</span>`;
+                note = `<span style="color:#2563eb;">📍 ${item.note}</span>`;
+            } else {
+                typeBadge = `<span class="badge badge-leave">請假(${item.type})</span>`;
+                detail = `<span style="color:#b45309; font-weight:500;">📋 事由：${item.reason}</span>`;
+                note = `<span style="color:#94a3b8; font-style:italic;">假單審核中</span>`;
+            }
 
             tr.innerHTML = `
                 <td><strong>${item.name || '未填'}</strong></td>
                 <td style="color:#64748b; font-size:13px;">${item.email}</td>
-                <td><span class="badge ${badgeClass}">${item.type}</span></td>
+                <td>${typeBadge}</td>
                 <td>${item.date}</td>
-                <td><span class="badge-time">${item.time || ''}</span></td>
-                <td><span style="color:#2563eb;">📍 ${item.note || '無'}</span></td>
+                <td>${detail}</td>
+                <td>${note}</td>
             `;
             tbody.appendChild(tr);
         });
 
-        if (document.getElementById('total-count')) document.getElementById('total-count').innerText = allMergedRecords.length;
-        if (document.getElementById('checkin-count')) document.getElementById('checkin-count').innerText = inCount;
-        if (document.getElementById('checkout-count')) document.getElementById('checkout-count').innerText = outCount;
+        document.getElementById('total-count').innerText = allMergedRecords.length;
+        document.getElementById('checkin-count').innerText = inCount;
+        document.getElementById('checkout-count').innerText = outCount;
     }
 
     // 主管清空數據
-    const clearBtn = document.getElementById('btn-admin-clear');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            if (confirm('確定要清空雲端上所有歷史紀錄嗎？此動作無法復原！')) {
-                showLoading(true);
-                remove(ref(db, 'clock_records'))
-                    .then(() => { showLoading(false); alert('雲端紀錄已成功清空！'); })
-                    .catch(err => { showLoading(false); alert('清空失敗：' + err.message); });
-            }
-        });
-    }
+    document.getElementById('btn-admin-clear').addEventListener('click', () => {
+        if (confirm('確定要清空雲端上所有歷史紀錄嗎？此動作無法復原！')) {
+            showLoading(true);
+            remove(ref(db, 'clock_records'))
+                .then(() => remove(ref(db, 'leave_records')))
+                .then(() => { showLoading(false); alert('雲端紀錄已成功清空！'); })
+                .catch(err => { showLoading(false); alert('清空失敗：' + err.message); });
+        }
+    });
 
     // 主管匯出 CSV
-    const exportBtn = document.getElementById('btn-admin-export');
-    if (exportBtn) {
-        exportBtn.addEventListener('click', () => {
-            if (allMergedRecords.length === 0) { alert('目前沒有資料可以匯出！'); return; }
-            let csvContent = "\uFEFF員工姓名,電子郵件,動態類型,日期,精準時間,打卡備註\n";
-            [...allMergedRecords].reverse().forEach(item => {
-                csvContent += `"${item.name}","${item.email}","${item.type}打卡","${item.date}","${item.time}","${item.note}"\n`;
-            });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `公司出勤報表_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+    document.getElementById('btn-admin-export').addEventListener('click', () => {
+        if (allMergedRecords.length === 0) { alert('目前沒有資料可以匯出！'); return; }
+        let csvContent = "\uFEFF員工姓名,電子郵件,動態類型,日期,精準時間/原因,打卡地點與備註\n";
+        [...allMergedRecords].reverse().forEach(item => {
+            const typeStr = item.recordType === 'clock' ? `${item.type}打卡` : `請假(${item.type})`;
+            const detailStr = item.recordType === 'clock' ? (item.time || '') : `原因：${item.reason}`;
+            const noteStr = item.recordType === 'clock' ? item.note : '請假申請';
+            csvContent += `"${item.name}","${item.email}","${typeStr}","${item.date}","${detailStr}","${noteStr}"\n`;
         });
-    }
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `公司人事報表_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
 
     // ==========================================
-    // 🚪 登出功能
+    // 🚪 登出功能 (兩邊通用)
     // ==========================================
     const logoutHandler = () => {
         showLoading(true);
         signOut(auth).catch(err => { showLoading(false); alert('登出失敗：' + err.message); });
     };
-    if (document.getElementById('btn-user-logout')) document.getElementById('btn-user-logout').addEventListener('click', logoutHandler);
-    if (document.getElementById('btn-admin-logout')) document.getElementById('btn-admin-logout').addEventListener('click', logoutHandler);
-
-
-    // 🌟【把 ③ 的兩段獨立功能直接整塊貼在這邊！】====================
-    
-    // 1. 自動即時過濾並撈取「當前登入同仁」的專屬出勤紀錄
-    function initUserHistoryListener(userEmail) {
-        onValue(ref(db, 'clock_records'), (snapshot) => {
-            const data = snapshot.val() || {};
-            const tbody = document.getElementById('user-history-tbody');
-            const noHistoryMsg = document.getElementById('user-no-history');
-            if (!tbody) return;
-            
-            tbody.innerHTML = '';
-            let myRecords = [];
-
-            Object.keys(data).forEach(k => {
-                if (data[k] && data[k].email === userEmail) {
-                    myRecords.push(data[k]);
-                }
-            });
-
-            myRecords.sort((a, b) => b.timestamp - a.timestamp);
-
-            if (myRecords.length === 0) {
-                if (noHistoryMsg) noHistoryMsg.style.display = 'block';
-                return;
-            }
-            if (noHistoryMsg) noHistoryMsg.style.display = 'none';
-
-            myRecords.forEach(item => {
-                const tr = document.createElement('tr');
-                const color = item.type === '上班' ? '#16a34a' : '#dc2626';
-                tr.innerHTML = `
-                    <td>${item.date}</td>
-                    <td><span style="color: ${color}; font-weight:bold;">${item.type}</span></td>
-                    <td style="font-family:monospace;">${item.time}</td>
-                    <td style="color:#64748b; font-size:12px;">${item.note || '無'}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        });
-    }
-
-    // 2. 線上請款送出按鈕監聽事件
-    const expenseBtn = document.getElementById('btn-expense-submit');
-    if (expenseBtn) {
-        expenseBtn.addEventListener('click', () => {
-            if (!currentUserProfile) return;
-            const title = document.getElementById('expense-title').value.trim();
-            const amount = document.getElementById('expense-amount').value.trim();
-            const note = document.getElementById('expense-note').value.trim();
-
-            if (!title || !amount) { alert('請填寫請款項目與金額！'); return; }
-
-            const expenseRecord = {
-                name: currentUserProfile.name,
-                email: currentUserProfile.email,
-                type: "費用請款",
-                title: title,
-                amount: Number(amount),
-                date: new Date().toISOString().split('T')[0],
-                note: note || "未提供憑證備註",
-                timestamp: Date.now()
-            };
-
-            showLoading(true);
-            push(ref(db, 'expense_records'), expenseRecord)
-                .then(() => {
-                    showLoading(false);
-                    alert('請款申請已成功雲端送出！請將實體發票交至財務部。');
-                    document.getElementById('expense-title').value = '';
-                    document.getElementById('expense-amount').value = '';
-                    document.getElementById('expense-note').value = '';
-                })
-                .catch(err => { showLoading(false); alert('申請失敗：' + err.message); });
-        });
-    }
-    // =============================================================
-
+    document.getElementById('btn-user-logout').addEventListener('click', logoutHandler);
+    document.getElementById('btn-admin-logout').addEventListener('click', logoutHandler);
 </script>
 
 </body>
