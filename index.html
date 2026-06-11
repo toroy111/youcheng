@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>佑誠工程行 - 智能後台管理系統</title>
+    <title>佑誠工程行 - 智能管理系統</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -94,25 +94,21 @@
         .badge-in { background: #10b981; }
         .badge-out { background: #ef4444; }
         .badge-pending { background: #6b7280; }
-        .badge-approved { background: #10b981; }
-        .badge-rejected { background: #ef4444; }
 
         .btn-filter { padding: 6px 15px; background: white; border: 1px solid #cbd5e1; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; margin-right: 5px; }
-        .btn-filter.active { background: var(--primary-blue); color: white; border-color: var(--primary-blue); }
-
-        /* 聊天室專用樣式 */
-        .chat-container { height: 400px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 10px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .chat-msg { max-width: 70%; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; position: relative; }
+        
+        /* 聊天室樣式 */
+        .chat-container { height: 350px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 10px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .chat-msg { max-width: 70%; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; }
         .chat-msg.self { background: #d9f99d; align-self: flex-end; color: #1e3a8a; }
         .chat-msg.other { background: white; align-self: flex-start; color: #334155; border: 1px solid #e2e8f0; }
         
-        /* 薪資日薪填寫專用樣式 */
-        .salary-input { width: 90px; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 5px; text-align: right; font-weight: bold; color: #0f172a; }
+        .salary-input { width: 100px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: right; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="loading-screen"><div class="spinner"></div><p style="margin-top:10px; color:#64748b;">系統安全驗證中...</p></div>
+<div id="loading-screen"><div class="spinner"></div><p style="margin-top:10px; color:#64748b;">系統同步驗證中...</p></div>
 
 <div id="auth-view">
     <div class="auth-card">
@@ -120,8 +116,6 @@
         <div class="form-group"><label>企業電子郵件</label><input type="email" id="auth-email" placeholder="example@company.com"></div>
         <div id="reg-fields" style="display: none;">
             <div class="form-group"><label>真實姓名</label><input type="text" id="auth-name" placeholder="請輸入姓名"></div>
-            <div class="form-group"><label>每月設定底薪</label><input type="number" id="auth-base-salary" value="32000"></div>
-            <div class="form-group"><label>設定標準時薪</label><input type="number" id="auth-hourly-rate" value="190"></div>
             <div class="form-group"><label>申請職稱角色</label><select id="auth-role"><option value="user">一般員工</option><option value="admin">老闆 / 管理員</option></select></div>
         </div>
         <div class="form-group" id="pwd-group"><label>密碼</label><input type="password" id="auth-password" placeholder="請輸入密碼"></div>
@@ -141,22 +135,15 @@
         
         <div class="nav-group-title">行政申請</div>
         <div class="nav-item" onclick="navTo('leave')"><i class="fa-solid fa-calendar-plus"></i> 線上請假申請</div>
-        <div class="nav-item" onclick="navTo('overtime')"><i class="fa-solid fa-business-time"></i> 線上加班申請</div>
-        <div class="nav-item" onclick="navTo('salary')"><i class="fa-solid fa-money-check-dollar"></i> 個人薪資查詢</div>
         
-        <div class="nav-group-title">互動中心</div>
+        <div class="nav-group-title">公告與互動</div>
         <div class="nav-item" onclick="navTo('notice')"><i class="fa-solid fa-bullhorn"></i> 公司內部公告</div>
         <div class="nav-item" onclick="navTo('chat')"><i class="fa-solid fa-comments"></i> 員工內部聊天室</div>
-        <div class="nav-item" onclick="navTo('profile')"><i class="fa-solid fa-user-gear"></i> 個人資料修改</div>
 
         <div class="admin-only" style="display: none;">
-            <div class="nav-group-title">👑 老闆管理控制台</div>
-            <div class="nav-item" onclick="navTo('admin-monitor')"><i class="fa-solid fa-eye"></i> 當前實時監控</div>
+            <div class="nav-group-title">👑 老闆管理主控台</div>
             <div class="nav-item" onclick="navTo('admin-data')"><i class="fa-solid fa-database"></i> 全公司流水帳</div>
-            <div class="nav-item" onclick="navTo('admin-leave')"><i class="fa-solid fa-user-check"></i> 員工請假審核</div>
-            <div class="nav-item" onclick="navTo('admin-schedule')"><i class="fa-solid fa-calendar-days"></i> 企業排班系統</div>
             <div class="nav-item" onclick="navTo('admin-payroll')"><i class="fa-solid fa-calculator"></i> 智能薪資結算</div>
-            <div class="nav-item" onclick="navTo('admin-users')"><i class="fa-solid fa-users-gear"></i> 組織員工管理</div>
         </div>
 
         <div style="margin-top: auto; padding: 20px;">
@@ -179,14 +166,13 @@
             <div class="page-header"><div><h2>公司組織架構</h2><p>Company Structure</p></div></div>
             <div class="org-chart">
                 <div class="dept-card"><h4>🏢 管理部</h4><div class="employee-list-small">員工: 老闆 (主管)<br>員工: 人事助理</div></div>
-                <div class="dept-card"><h4>🏗️ 工程現場一部</h4><div class="employee-list-small">員工: 工務主任<br>員工: 現場工程師</div></div>
-                <div class="dept-card"><h4>📐 技術規畫部</h4><div class="employee-list-small">員工: 繪圖員<br>員工: 估算師</div></div>
+                <div class="dept-card"><h4>🏗️ 工程現場部</h4><div class="employee-list-small">員工: 工務主任<br>員工: 現場工程師</div></div>
             </div>
             <div class="card" style="margin-top:30px;">
                 <h3>最新打卡動態摘要</h3>
                 <table>
-                    <thead><tr><th>姓名</th><th>動態類型</th><th>時間</th><th>狀態說明</th></tr></thead>
-                    <tbody id="home-summary-tbody"><tr><td colspan="4">即時雲端數據同步中...</td></tr></tbody>
+                    <thead><tr><th>姓名</th><th>動態類型</th><th>時間</th><th>狀態</th></tr></thead>
+                    <tbody id="home-summary-tbody"><tr><td colspan="4">數據同步中...</td></tr></tbody>
                 </table>
             </div>
         </section>
@@ -196,39 +182,31 @@
             <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: start;">
                 <div class="card" style="margin: 0; flex: 1; min-width: 320px;">
                     <div style="text-align: center; margin-bottom: 20px; background: rgba(0,136,204,0.08); padding: 15px; border-radius: 10px;">
-                        <span style="font-size: 13px; font-weight: bold; color: #0088cc; display: block; margin-bottom: 5px;"><i class="fa-solid fa-clock"></i> 雲端同步現在時間</span>
+                        <span style="font-size: 13px; font-weight: bold; color: #0088cc; display: block; margin-bottom: 5px;"><i class="fa-solid fa-clock"></i> 雲端同步時間</span>
                         <h1 id="clock-page-time" style="font-family: monospace; font-size: 36px; color: #1e293b;">00:00:00</h1>
                     </div>
-                    
-                    <h3 style="margin-bottom:12px; font-size:16px;">填寫當日回報備註</h3>
-                    <div class="form-group"><textarea id="clock-note" rows="2" placeholder="選填：工作說明項目..."></textarea></div>
+                    <div class="form-group"><label>今日打卡備註</label><textarea id="clock-note" rows="2" placeholder="選填：工作說明項目..."></textarea></div>
                     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
                         <button class="btn-auth" id="btn-clock-in" style="background:#10b981; margin:0; padding:14px;"><i class="fa-solid fa-sun"></i> 上班打卡</button>
                         <button class="btn-auth" id="btn-clock-out" style="background:#ef4444; margin:0; padding:14px;"><i class="fa-solid fa-moon"></i> 下班打卡</button>
                     </div>
                 </div>
                 
-                <div class="card" style="margin: 0; width: 280px; padding: 20px;">
-                    <h4 style="margin-bottom:12px; font-size:15px; color: #1e3a8a;"><i class="fa-solid fa-clipboard-user"></i> 今日打卡狀態</h4>
+                <div class="card" style="margin: 0; width: 260px; padding: 20px;">
+                    <h4 style="margin-bottom:12px; font-size:15px; color: #1e3a8a;"><i class="fa-solid fa-clipboard-user"></i> 今日狀態</h4>
                     <div id="today-status-box" style="line-height: 2.2; font-size: 14px;">
-                        <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; margin-bottom: 4px;">🌅 上班打卡：<span id="status-in" style="font-weight:bold; color:#64748b;">未打卡</span></div>
-                        <div>🌇 下班打卡：<span id="status-out" style="font-weight:bold; color:#64748b;">未打卡</span></div>
+                        <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">🌅 上班：<span id="status-in" style="font-weight:bold; color:#64748b;">未打卡</span></div>
+                        <div style="padding-top: 4px;">🌇 下班：<span id="status-out" style="font-weight:bold; color:#64748b;">未打卡</span></div>
                     </div>
                 </div>
             </div>
         </section>
 
         <section id="page-history" class="content-section">
-            <div class="page-header"><h2>個人出勤明細查詢</h2></div>
-            <div style="margin-bottom: 15px;">
-                <button class="btn-filter active" onclick="filterHistory('all')">全部</button>
-                <button class="btn-filter" onclick="filterHistory('today')">今日</button>
-                <button class="btn-filter" onclick="filterHistory('week')">本週</button>
-                <button class="btn-filter" onclick="filterHistory('month')">本月</button>
-            </div>
+            <div class="page-header"><h2>個人出勤紀錄</h2></div>
             <div class="card">
                 <table>
-                    <thead><tr><th>日期</th><th>動態</th><th>時間</th><th>外勤與打卡備註說明</th></tr></thead>
+                    <thead><tr><th>日期</th><th>動態</th><th>時間</th><th>打卡備註說明</th></tr></thead>
                     <tbody id="user-history-tbody"></tbody>
                 </table>
             </div>
@@ -240,139 +218,58 @@
                 <div class="form-group">
                     <label>請假假別</label>
                     <select id="leave-type">
-                        <option value="事假">事假</option>
-                        <option value="病假">病假</option>
-                        <option value="特休">特休</option>
-                        <option value="公假">公假</option>
-                        <option value="喪假">喪假</option>
+                        <option value="事假">事假 (無薪)</option>
+                        <option value="病假">病假 (半薪)</option>
+                        <option value="特休">特休 / 年假</option>
                         <option value="婚假">婚假</option>
+                        <option value="喪假">喪假</option>
+                        <option value="公假">公假</option>
                     </select>
                 </div>
                 <div class="form-group"><label>請假日期</label><input type="date" id="leave-date"></div>
-                <div class="form-group"><label>請假時段描述</label><input type="text" id="leave-time-slot" placeholder="例如：13:00 ~ 17:00 (共 4 小時)"></div>
-                <div class="form-group"><label>請假具體原因事由</label><textarea id="leave-reason" rows="3" placeholder="請輸入請假具體事由..."></textarea></div>
+                <div class="form-group"><label>請假事由與說明</label><textarea id="leave-reason" rows="4" placeholder="請詳細填寫原因..."></textarea></div>
                 <button class="btn-auth" id="btn-leave-submit" style="background:var(--primary-blue); font-weight: bold;"><i class="fa-paper-plane far"></i> 送出請假申請單</button>
-            </div>
-        </section>
-
-        <section id="page-overtime" class="content-section">
-            <div class="page-header"><h2>線上加班申報系統</h2></div>
-            <div class="card" style="max-width: 500px; margin: 0;">
-                <div class="form-group"><label>加班日期</label><input type="date" id="ot-date"></div>
-                <div class="form-group"><label>加班時段</label><input type="text" id="ot-hours" placeholder="例如：18:00 ~ 20:00 (共 2 小時)"></div>
-                <div class="form-group"><label>工作原因與內容</label><textarea id="ot-reason" rows="3" placeholder="例如：工程進度趕工、月底盤點項目..."></textarea></div>
-                <button class="btn-auth" id="btn-ot-submit" style="background:#10b981; font-weight: bold;">確認申報加班</button>
-            </div>
-        </section>
-
-        <section id="page-salary" class="content-section">
-            <div class="page-header"><h2>個人每月實領薪資明細單</h2></div>
-            <div class="card" style="max-width: 500px;">
-                <h3 id="salary-month-title" style="color: #1e3a8a; margin-bottom:15px;">本月薪資摘要</h3>
-                <div style="line-height: 2.2; font-size:15px;">
-                    <div style="display:flex; justify-content:space-between;"><span>固定基本薪資：</span><span id="sal-base">$0</span></div>
-                    <div style="display:flex; justify-content:space-between;"><span>累計出勤時數：</span><span id="sal-hours">0 小時</span></div>
-                    <div style="display:flex; justify-content:space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom:10px;"><span>津貼/日薪結算：</span><span id="sal-ot" style="color:#10b981;">+$0</span></div>
-                    <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:bold; margin-top:10px; color:#10b981;"><span>當月應領實領總計：</span><span id="sal-total">$0</span></div>
-                </div>
             </div>
         </section>
 
         <section id="page-notice" class="content-section">
             <div class="page-header"><h2>公告中心 / 企業內部通知</h2></div>
-            
             <div class="card admin-only" style="display:none; background: rgba(0,136,204,0.05); border: 1px solid rgba(0,136,204,0.2);">
-                <h3 style="margin-bottom:15px; color: #0088cc;"><i class="fa-solid fa-pen-to-square"></i> 發布新內部重要公告 (老闆/管理員專用)</h3>
-                <div style="display: grid; grid-template-columns: 1fr 2fr; gap:15px;">
-                    <div class="form-group">
-                        <label>公告種類分類</label>
-                        <select id="notice-cate">
-                            <option value="公司公告">📢 公司公告</option>
-                            <option value="放假通知">📅 放假通知</option>
-                            <option value="員工旅遊">🚌 員工旅遊</option>
-                            <option value="教育訓練">✏️ 教育訓練</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>公告標題</label><input type="text" id="notice-title" placeholder="請輸入重要公告標題"></div>
-                </div>
-                <div class="form-group" style="margin-top:10px;"><label>公告公告詳細內容</label><textarea id="notice-content" rows="3" placeholder="請在此填寫要向所有同仁宣布的事情..."></textarea></div>
-                <button class="btn-auth" id="btn-post-notice" style="background:var(--primary-blue); margin:0; width:auto; padding:10px 25px;"><i class="fa-solid fa-bullhorn"></i> 即時同步公告全體同仁</button>
+                <h3 style="margin-bottom:12px; color: #0088cc;"><i class="fa-solid fa-pen-to-square"></i> 發布新內部重要公告 (老闆專用)</h3>
+                <div class="form-group"><label>公告標題</label><input type="text" id="notice-title" placeholder="請輸入重要公告標題"></div>
+                <div class="form-group"><label>公告詳細內文內容</label><textarea id="notice-content" rows="3" placeholder="請在此填寫向全體同仁宣佈的事項..."></textarea></div>
+                <button class="btn-auth" id="btn-post-notice" style="background:var(--primary-blue); margin:0; width:auto; padding:10px 25px;"><i class="fa-solid fa-bullhorn"></i> 發布公告</button>
             </div>
-
             <div id="notice-list-container"></div>
         </section>
 
         <section id="page-chat" class="content-section">
-            <div class="page-header"><h2>佑誠工程行內部員工聊天室 (即時通訊)</h2></div>
+            <div class="page-header"><h2>內部員工通訊聊天室</h2></div>
             <div class="card">
                 <div class="chat-container" id="chat-messages-box"></div>
                 <div style="margin-top: 10px; display: flex; gap: 8px;">
-                    <button class="btn-filter" onclick="sendChatMedia('圖片')" style="border-radius:6px; font-size:12px;"><i class="fa-solid fa-image" style="color:#10b981;"></i> 發送圖片連結</button>
-                    <button class="btn-filter" onclick="sendChatMedia('檔案')" style="border-radius:6px; font-size:12px;"><i class="fa-solid fa-file-pdf" style="color:#f59e0b;"></i> 發送檔案網址</button>
+                    <button class="btn-filter" onclick="sendChatMedia('圖片')" style="border-radius:20px; font-size:12px; padding: 6px 12px;"><i class="fa-solid fa-image" style="color:#10b981;"></i> 發送圖片網址</button>
+                    <button class="btn-filter" onclick="sendChatMedia('檔案')" style="border-radius:20px; font-size:12px; padding: 6px 12px;"><i class="fa-solid fa-file-pdf" style="color:#f59e0b;"></i> 發送檔案網址</button>
                 </div>
                 <div style="display: flex; gap:10px; margin-top:10px;">
-                    <input type="text" id="chat-input-text" style="flex:1; padding:12px; border:1px solid #ddd; border-radius:8px;" placeholder="在此鍵入訊息內文，或直接貼上圖片連結...">
+                    <input type="text" id="chat-input-text" style="flex:1; padding:12px; border:1px solid #ddd; border-radius:8px;" placeholder="在此輸入訊息，或直接貼上圖片連結...">
                     <button class="btn-auth" id="btn-chat-send" style="width:100px; margin:0; background:var(--primary-blue); font-weight:bold;">傳送</button>
                 </div>
             </div>
         </section>
 
-        <section id="page-profile" class="content-section">
-            <div class="page-header"><h2>個人基礎設定與密碼修改</h2></div>
-            <div class="card" style="max-width: 500px; margin:0;">
-                <div class="form-group"><label>聯絡電話</label><input type="text" id="prof-phone" placeholder="例如：0912345678"></div>
-                <div class="form-group"><label>LINE ID</label><input type="text" id="prof-line" placeholder="請填寫通訊ID"></div>
-                <div class="form-group"><label>緊急聯絡人與電話</label><input type="text" id="prof-emergency" placeholder="例如：王阿民 (父) 0911-111222"></div>
-                <button class="btn-auth" id="btn-profile-save" style="background:var(--primary-blue);">儲存變更設定</button>
-            </div>
-        </section>
-
-        <section id="page-admin-monitor" class="content-section">
-            <div class="page-header"><h2>今日全體同仁出勤實時監控面板</h2></div>
-            <div class="card">
-                <table>
-                    <thead><tr><th>同仁姓名</th><th>電子郵件</th><th>當前動態</th><th>最後打卡備註</th></tr></thead>
-                    <tbody id="admin-monitor-tbody"></tbody>
-                </table>
-            </div>
-        </section>
-
         <section id="page-admin-data" class="content-section">
-            <div class="page-header"><h2>全公司即時歷史出勤流水帳總攬</h2></div>
+            <div class="page-header"><h2>全公司即時流水帳紀錄</h2></div>
             <div class="card">
                 <table>
-                    <thead><tr><th>姓名</th><th>類型</th><th>日期</th><th>精準時間</th><th>外勤與打卡備註</th></tr></thead>
+                    <thead><tr><th>姓名</th><th>類型</th><th>日期</th><th>精準時間</th><th>打卡備註</th></tr></thead>
                     <tbody id="admin-full-tbody"></tbody>
                 </table>
             </div>
         </section>
 
-        <section id="page-admin-leave" class="content-section">
-            <div class="page-header"><h2>待審核請假/加班單簽核控制台</h2></div>
-            <div class="card">
-                <h3>待處理單據清單</h3>
-                <table>
-                    <thead><tr><th>同仁</th><th>單據類型</th><th>請假/加班項目</th><th>日期/時段</th><th>原因事由</th><th>審核狀態</th><th>決策操作</th></tr></thead>
-                    <tbody id="admin-leave-tbody"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="page-admin-schedule" class="content-section">
-            <div class="page-header"><h2>企業週排班暨班別設定系統</h2></div>
-            <div class="card">
-                <table id="schedule-table">
-                    <thead><tr><th>員工姓名</th><th>星期一</th><th>星期二</th><th>星期三</th><th>星期四</th><th>星期五</th><th>星期六</th><th>星期日</th></tr></thead>
-                    <tbody id="admin-schedule-tbody"></tbody>
-                </table>
-            </div>
-        </section>
-
         <section id="page-admin-payroll" class="content-section">
-            <div class="page-header">
-                <h2>智能薪資自動結算與手動日薪自填系統</h2>
-                <button class="btn-filter" style="background:#10b981; color:white; border:none; padding:8px 15px;" id="btn-export-salary"><i class="fa-solid fa-file-excel"></i> 一鍵匯出薪資總表 (CSV)</button>
-            </div>
+            <div class="page-header"><h2>智能薪資自動結算與日薪自填系統</h2></div>
             <div class="card">
                 <div style="margin-bottom:15px; display:flex; align-items:center; gap:10px;">
                     <i class="fa-solid fa-filter" style="color:#0088cc;"></i>
@@ -388,21 +285,8 @@
                         </tr>
                     </thead>
                     <tbody id="admin-payroll-tbody">
-                        <tr><td colspan="4">載入最新組織架構中...</td></tr>
+                        <tr><td colspan="4">載入最新數據中...</td></tr>
                     </tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="page-admin-users" class="content-section">
-            <div class="page-header">
-                <h2>全體人事架構檔案與聊天室進階管理</h2>
-                <button class="btn-filter" style="background:#ef4444; color:white; border:none;" id="btn-clear-chat"><i class="fa-solid fa-trash"></i> 一鍵清空群組聊天室</button>
-            </div>
-            <div class="card">
-                <table>
-                    <thead><tr><th>員工姓名</th><th>電子郵件</th><th>當前權限職稱</th><th>固定底薪</th><th>計薪時薪</th></tr></thead>
-                    <tbody id="admin-users-tbody"></tbody>
                 </table>
             </div>
         </section>
@@ -433,7 +317,7 @@
     let currentUserProfile = null;
     let cachedClockRecords = [];
     let cachedUserList = [];
-    let customDailyRates = {}; // 用於暫存老闆動態輸入的日薪
+    let customDailyRates = {}; 
 
     window.navTo = function(pageId) {
         document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
@@ -441,8 +325,7 @@
         if (targetPage) targetPage.classList.add('active');
         
         document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-        const currentItem = event ? event.currentTarget : null;
-        if (currentItem && currentItem.classList) currentItem.classList.add('active');
+        if (event && event.currentTarget) event.currentTarget.classList.add('active');
     };
 
     function showLoading(show) { 
@@ -491,13 +374,8 @@
         } else {
             const name = document.getElementById('auth-name').value;
             const role = document.getElementById('auth-role').value;
-            const baseSalary = parseInt(document.getElementById('auth-base-salary').value) || 32000;
-            const hourlyRate = parseInt(document.getElementById('auth-hourly-rate').value) || 190;
-            
             createUserWithEmailAndPassword(auth, email, pwd).then(cred => {
-                set(ref(db, `users/${cred.user.uid}`), { 
-                    name, email, role, uid: cred.user.uid, baseSalary, hourlyRate, phone: "", line: "", emergency: "" 
-                });
+                set(ref(db, `users/${cred.user.uid}`), { name, email, role, uid: cred.user.uid });
             }).catch(err => { alert("註冊失敗: " + err.message); showLoading(false); });
         }
     });
@@ -517,109 +395,54 @@
             showLoading(false); 
             alert(type + '打卡成功！');
             document.getElementById('clock-note').value = '';
+        }).catch(err => {
+            showLoading(false);
+            alert("打卡失敗: " + err.message);
         });
     }
     document.getElementById('btn-clock-in').addEventListener('click', () => handleClock('上班'));
     document.getElementById('btn-clock-out').addEventListener('click', () => handleClock('下班'));
 
     document.getElementById('btn-leave-submit').addEventListener('click', () => {
+        if (!currentUserProfile) return;
         const leaveType = document.getElementById('leave-type').value;
         const leaveDate = document.getElementById('leave-date').value;
-        const leaveTimeSlot = document.getElementById('leave-time-slot').value || "全天";
         const leaveReason = document.getElementById('leave-reason').value.trim();
-        if (!leaveDate || !leaveReason) { alert('請完整填寫日期與事由！'); return; }
+        if (!leaveDate || !leaveReason) { alert('請選擇日期與填寫原因！'); return; }
 
-        push(ref(db, 'admin_requests'), {
+        showLoading(true);
+        push(ref(db, 'leave_records'), {
             name: currentUserProfile.name, email: currentUserProfile.email, uid: currentUserProfile.uid,
-            reqType: "請假申請", subType: leaveType, date: leaveDate, info: leaveTimeSlot, reason: leaveReason, status: "待審核", timestamp: Date.now()
-        }).then(() => { alert('請假單已送出，等待簽核！'); navTo('home'); });
+            leaveType, date: leaveDate, reason: leaveReason, status: "待審核", timestamp: Date.now()
+        }).then(() => {
+            showLoading(false);
+            alert('請假單已成功送出！');
+            document.getElementById('leave-reason').value = '';
+            navTo('home');
+        }).catch(err => { showLoading(false); alert(err.message); });
     });
 
-    document.getElementById('btn-ot-submit').addEventListener('click', () => {
-        const otDate = document.getElementById('ot-date').value;
-        const otHours = document.getElementById('ot-hours').value;
-        const otReason = document.getElementById('ot-reason').value.trim();
-        if (!otDate || !otHours || !otReason) { alert('請填妥所有加班申報欄位！'); return; }
-
-        push(ref(db, 'admin_requests'), {
-            name: currentUserProfile.name, email: currentUserProfile.email, uid: currentUserProfile.uid,
-            reqType: "加班申請", subType: "加班費", date: otDate, info: otHours, reason: otReason, status: "待審核", timestamp: Date.now()
-        }).then(() => { alert('加班申請已送出！'); navTo('home'); });
-    });
-
-    document.getElementById('btn-profile-save').addEventListener('click', () => {
-        update(ref(db, `users/${currentUserProfile.uid}`), {
-            phone: document.getElementById('prof-phone').value,
-            line: document.getElementById('prof-line').value,
-            emergency: document.getElementById('prof-emergency').value
-        }).then(() => alert('個人通訊資料變更成功！'));
-    });
-
-    // 聊天室優化發布邏輯
     document.getElementById('btn-chat-send').addEventListener('click', () => {
         const msgText = document.getElementById('chat-input-text').value.trim();
         if (!msgText) return;
-        push(ref(db, 'chat_messages'), {
-            name: currentUserProfile.name, text: msgText, type: "text", timestamp: Date.now()
-        }).then(() => { document.getElementById('chat-input-text').value = ''; });
+        push(ref(db, 'chat_messages'), { name: currentUserProfile.name, text: msgText, type: "text", timestamp: Date.now() })
+        .then(() => { document.getElementById('chat-input-text').value = ''; });
     });
 
     window.sendChatMedia = function(mediaType) {
-        const url = prompt(`請輸入您要分享的${mediaType}連結網址：`);
+        const url = prompt(`請輸入您要分享的${mediaType}網址連結：`);
         if(!url) return;
-        push(ref(db, 'chat_messages'), {
-            name: currentUserProfile.name, text: url, type: mediaType === '圖片' ? 'image' : 'file', timestamp: Date.now()
-        });
-    }
+        push(ref(db, 'chat_messages'), { name: currentUserProfile.name, text: url, type: mediaType === '圖片' ? 'image' : 'file', timestamp: Date.now() });
+    };
 
-    // 主管公告發布功能
     document.getElementById('btn-post-notice').addEventListener('click', () => {
-        const cate = document.getElementById('notice-cate').value;
         const title = document.getElementById('notice-title').value.trim();
         const content = document.getElementById('notice-content').value.trim();
         if(!title || !content) { alert('請填寫完整公告內容！'); return; }
-        push(ref(db, 'notices'), { cate, title, content, date: new Date().toISOString().split('T')[0], timestamp: Date.now() })
-        .then(() => { alert('最新內部公告已向全體員工發布！'); document.getElementById('notice-title').value=''; document.getElementById('notice-content').value=''; });
+        push(ref(db, 'notices'), { title, content, date: new Date().toISOString().split('T')[0], timestamp: Date.now() })
+        .then(() => { alert('公告已發布！'); document.getElementById('notice-title').value=''; document.getElementById('notice-content').value=''; });
     });
 
-    if(document.getElementById('btn-clear-chat')) {
-        document.getElementById('btn-clear-chat').addEventListener('click', () => {
-            if(confirm('確定要一鍵清空聊天群組所有歷史訊息嗎？')) remove(ref(db, 'chat_messages'));
-        });
-    }
-
-    window.filterHistory = function(filterType) {
-        document.querySelectorAll('.btn-filter').forEach(b => b.classList.remove('active'));
-        if (event) event.currentTarget.classList.add('active');
-        renderUserHistory(filterType);
-    };
-
-    function renderUserHistory(filterType) {
-        const tbody = document.getElementById('user-history-tbody');
-        if (!tbody) return;
-        let filtered = cachedClockRecords.filter(i => i.email === currentUserProfile.email);
-        
-        const now = new Date();
-        const todayStr = now.toISOString().split('T')[0];
-
-        if (filterType === 'today') {
-            filtered = filtered.filter(i => i.date === todayStr);
-        } else if (filterType === 'week') {
-            const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-            filtered = filtered.filter(i => i.timestamp >= oneWeekAgo);
-        } else if (filterType === 'month') {
-            const thisMonth = todayStr.substring(0, 7);
-            filtered = filtered.filter(i => i.date.startsWith(thisMonth));
-        }
-        tbody.innerHTML = filtered.map(i => `<tr><td>${i.date}</td><td><span class="badge badge-in">${i.type}</span></td><td>${i.time}</td><td>${i.note}</td></tr>`).join('');
-    }
-
-    window.auditRequest = function(reqId, nextStatus) {
-        update(ref(db, `admin_requests/${reqId}`), { status: nextStatus })
-        .then(() => alert(`單據已處置為：【${nextStatus}】`));
-    };
-
-    // 智能薪資自填與即時搜尋渲染模組
     window.updateLocalRate = function(uid, value) {
         customDailyRates[uid] = parseInt(value) || 0;
         const days = parseInt(document.getElementById(`days-${uid}`).innerText) || 0;
@@ -639,14 +462,14 @@
         payrollTbody.innerHTML = filteredUsers.map(u => {
             const myClocks = cachedClockRecords.filter(c => c.uid === u.uid && (c.type === '上班' || c.type === '下班'));
             const daysCount = [...new Set(myClocks.map(c => c.date))].length;
-            if(!customDailyRates[u.uid]) customDailyRates[u.uid] = 1500; // 預設提供一個公務日薪基準
+            if(!customDailyRates[u.uid]) customDailyRates[u.uid] = 1500; 
 
             return `
                 <tr>
                     <td><b>${u.name}</b></td>
                     <td id="days-${u.uid}">${daysCount} 天</td>
                     <td><input type="number" class="salary-input" value="${customDailyRates[u.uid]}" oninput="updateLocalRate('${u.uid}', this.value)"></td>
-                    <td style="font-weight:bold; color:#1e3a8a; font-size:15px;" id="total-${u.uid}">$${daysCount * customDailyRates[u.uid]}</td>
+                    <td style="font-weight:bold; color:#1e3a8a;" id="total-${u.uid}">$${daysCount * customDailyRates[u.uid]}</td>
                 </tr>
             `;
         }).join('');
@@ -654,8 +477,7 @@
 
     function initDataListeners() {
         const todayStr = new Date().toISOString().split('T')[0];
-        document.getElementById('leave-date').value = todayStr;
-        document.getElementById('ot-date').value = todayStr;
+        if (document.getElementById('leave-date')) document.getElementById('leave-date').value = todayStr;
 
         onValue(ref(db, 'clock_records'), (snapshot) => {
             const data = snapshot.val() || {};
@@ -663,26 +485,26 @@
             cachedClockRecords = list;
 
             const myToday = list.filter(i => i.email === currentUserProfile.email && i.date === todayStr);
-            ['上班', '下班'].forEach(t => {
-                const found = myToday.find(i => i.type === t);
-                const idMap = {'上班':'status-in','下班':'status-out'};
-                document.getElementById(idMap[t]).innerText = found ? `✓ 已打卡 (${found.time})` : '□ 未打卡';
-                document.getElementById(idMap[t]).style.color = found ? '#10b981' : '#64748b';
-            });
+            const statusIn = myToday.find(i => i.type === '上班');
+            const statusOut = myToday.find(i => i.type === '下班');
+            
+            document.getElementById('status-in').innerText = statusIn ? `✓ 已打卡 (${statusIn.time})` : '□ 未打卡';
+            document.getElementById('status-in').style.color = statusIn ? '#10b981' : '#64748b';
+            document.getElementById('status-out').innerText = statusOut ? `✓ 已打卡 (${statusOut.time})` : '□ 未打卡';
+            document.getElementById('status-out').style.color = statusOut ? '#10b981' : '#64748b';
 
             document.getElementById('home-summary-tbody').innerHTML = list.slice(0, 5).map(i => `
-                <tr><td>${i.name}</td><td><span class="badge badge-in">${i.type}</span></td><td>${i.time}</td><td>${i.note}</td></tr>
+                <tr><td>${i.name}</td><td>${i.type}</td><td>${i.time}</td><td><span class="badge ${i.type==='上班'?'badge-in':'badge-out'}">已回報</span></td></tr>
             `).join('');
 
-            renderUserHistory('all');
+            const myHistory = list.filter(i => i.email === currentUserProfile.email);
+            document.getElementById('user-history-tbody').innerHTML = myHistory.map(i => `
+                <tr><td>${i.date}</td><td>${i.type}</td><td>${i.time}</td><td>${i.note}</td></tr>
+            `).join('');
 
             if(currentUserProfile.role === 'admin') {
-                document.getElementById('admin-full-tbody').innerHTML = list.map(i => `<tr><td>${i.name}</td><td>${i.type}</td><td>${i.date}</td><td>${i.time}</td><td>${i.note}</td></tr>`).join('');
-                const uniqueUsers = {};
-                list.forEach(i => { if(!uniqueUsers[i.email]) uniqueUsers[i.email] = i; });
-                document.getElementById('admin-monitor-tbody').innerHTML = Object.values(uniqueUsers).map(i => `
-                    <tr><td>${i.name}</td><td>${i.email}</td><td><span class="badge badge-in">${i.type}</span></td><td>${i.date} ${i.time} (${i.note})</td></tr>
-                `).join('');
+                const adminTbody = document.getElementById('admin-full-tbody');
+                if(adminTbody) adminTbody.innerHTML = list.map(i => `<tr><td>${i.name}</td><td>${i.type}</td><td>${i.date}</td><td>${i.time}</td><td>${i.note}</td></tr>`).join('');
                 triggerPayrollRender();
             }
         });
@@ -690,81 +512,16 @@
         onValue(ref(db, 'users'), (snapshot) => {
             const usersData = snapshot.val() || {};
             cachedUserList = Object.values(usersData);
-
-            if(usersData[currentUserProfile.uid]) {
-                document.getElementById('prof-phone').value = usersData[currentUserProfile.uid].phone || "";
-                document.getElementById('prof-line').value = usersData[currentUserProfile.uid].line || "";
-                document.getElementById('prof-emergency').value = usersData[currentUserProfile.uid].emergency || "";
-            }
-
-            if(currentUserProfile.role === 'admin') {
-                document.getElementById('admin-users-tbody').innerHTML = cachedUserList.map(u => `<tr><td>${u.name}</td><td>${u.email}</td><td>${u.role==='admin'?'老闆':'一般員工'}</td><td>$${u.baseSalary || 32000}</td><td>$${u.hourlyRate || 190}</td></tr>`).join('');
-                document.getElementById('admin-schedule-tbody').innerHTML = cachedUserList.map(u => `<tr><td><b>${u.name}</b></td><td>早班</td><td>早班</td><td>早班</td><td>早班</td><td>早班</td><td><span style="color:#ef4444;">週休</span></td><td><span style="color:#ef4444;">週休</span></td></tr>`).join('');
-                triggerPayrollRender();
-
-                document.getElementById('btn-export-salary').onclick = () => {
-                    let csvContent = "data:text/csv;charset=utf-8,員工姓名,出勤天數,當期填寫日薪,實領結算總額\n";
-                    cachedUserList.forEach(u => {
-                        const days = [...new Set(cachedClockRecords.filter(c => c.uid === u.uid && (c.type === '上班' || c.type === '下班')).map(c => c.date))].length;
-                        const rate = customDailyRates[u.uid] || 1500;
-                        csvContent += `${u.name},${days},${rate},${days * rate}\n`;
-                    });
-                    const encodedUri = encodeURI(csvContent);
-                    const link = document.createElement("a");
-                    link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", `佑誠工程行_日薪自填報表_${new Date().toISOString().split('T')[0]}.csv`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                };
-            }
-
-            const me = usersData[currentUserProfile.uid];
-            if(me) {
-                const myClocks = cachedClockRecords.filter(c => c.email === me.email && (c.type === '上班' || c.type === '下班'));
-                const days = [...new Set(myClocks.map(c => c.date))].length;
-                document.getElementById('sal-base').innerText = `$${me.baseSalary || 32000}`;
-                document.getElementById('sal-hours').innerText = `${days * 8} 小時 (累計出勤 ${days} 天)`;
-                document.getElementById('sal-ot').innerText = `+$${days * 1500} (以每日加給估算)`;
-                document.getElementById('sal-total').innerText = `$${(me.baseSalary || 32000) + (days * 1500)}`;
-            }
-        });
-
-        onValue(ref(db, 'admin_requests'), (snapshot) => {
-            const data = snapshot.val() || {};
-            const list = Object.entries(data).sort((a,b) => b[1].timestamp - a[1].timestamp);
-            const tbody = document.getElementById('admin-leave-tbody');
-            if(tbody) {
-                tbody.innerHTML = list.map(([id, i]) => `
-                    <tr>
-                        <td>${i.name}</td>
-                        <td><b>${i.reqType}</b></td>
-                        <td><span class="badge badge-pending">${i.subType}</span></td>
-                        <td>${i.date} (${i.info})</td>
-                        <td>${i.reason}</td>
-                        <td><span class="badge ${i.status==='待審核'?'badge-pending':i.status==='核准'?'badge-approved':'badge-rejected'}">${i.status}</span></td>
-                        <td>
-                            ${i.status==='待審核' ? `
-                                <button onclick="auditRequest('${id}','核准')" style="background:#10b981; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">核准</button>
-                                <button onclick="auditRequest('${id}','駁回')" style="background:#ef4444; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">駁回</button>
-                            ` : '審查完畢'}
-                        </td>
-                    </tr>
-                `).join('');
-            }
+            if(currentUserProfile.role === 'admin') triggerPayrollRender();
         });
 
         onValue(ref(db, 'notices'), (snapshot) => {
             const data = snapshot.val() || {};
             const list = Object.values(data).sort((a,b) => b.timestamp - a.timestamp);
             document.getElementById('notice-list-container').innerHTML = list.map(i => `
-                <div class="card" style="margin-top: 15px;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                        <span class="badge badge-in">${i.cate}</span>
-                        <small style="color:#94a3b8;">發布日期：${i.date}</small>
-                    </div>
-                    <h4>${i.title}</h4>
-                    <p style="font-size:14px; color:#475569; margin-top:8px; line-height:1.5; white-space: pre-wrap;">${i.content}</p>
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between;"><h4 style="color:#1e3a8a;">📢 ${i.title}</h4><small style="color:#94a3b8;">${i.date}</small></div>
+                    <p style="font-size:14px; color:#475569; margin-top:8px; white-space: pre-wrap;">${i.content}</p>
                 </div>
             `).join('');
         });
@@ -776,13 +533,11 @@
             box.innerHTML = list.map(i => {
                 const isSelf = i.name === currentUserProfile.name;
                 let body = i.text;
-                
-                // 智慧判定網址格式並提供對應的連結或圖片載入
                 if(i.type === "image" || i.text.startsWith("http://") || i.text.startsWith("https://")) {
                     if (i.type === "file") {
                         body = `<a href="${i.text}" target="_blank" style="color:#0088cc; font-weight:bold; text-decoration:underline;"><i class="fa-solid fa-file-arrow-down"></i> 點此下載同仁分享的外部檔案</a>`;
                     } else {
-                        body = `<a href="${i.text}" target="_blank"><img src="${i.text}" style="max-width:100%; max-height:180px; border-radius:8px; display:block; margin-top:5px; border: 1px solid #ddd;" onerror="this.src='https://placehold.co/200x100?text=Image+Link';"></a>`;
+                        body = `<a href="${i.text}" target="_blank"><img src="${i.text}" style="max-width:100%; max-height:150px; border-radius:8px; display:block; margin-top:5px; border:1px solid #ddd;" onerror="this.src='https://placehold.co/200x100?text=圖片連結';"></a>`;
                     }
                 }
                 return `<div class="chat-msg ${isSelf?'self':'other'}"><b>${i.name}</b>：<div>${body}</div></div>`;
@@ -793,7 +548,6 @@
 
     document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
 
-    // 每秒同步雙時鐘運作
     setInterval(() => {
         const timeString = new Date().toLocaleTimeString('zh-TW', {hour12:false});
         document.getElementById('current-time').innerText = timeString;
