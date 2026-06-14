@@ -108,6 +108,7 @@
         
         /* 薪資日薪填寫專用樣式 */
         .salary-input { width: 90px; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 5px; text-align: right; font-weight: bold; color: #0f172a; }
+        .salary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 14px; }
     </style>
 </head>
 <body>
@@ -291,15 +292,40 @@
             </div>
         </section>
 
+        <!-- 升級版功能：個人每月實領薪資明細單 -->
         <section id="page-salary" class="content-section">
-            <div class="page-header"><h2>個人每月實領薪資明細單</h2></div>
-            <div class="card" style="max-width: 500px;">
-                <h3 id="salary-month-title" style="color: #1e3a8a; margin-bottom:15px;">本月薪資摘要</h3>
-                <div style="line-height: 2.2; font-size:15px;">
-                    <div style="display:flex; justify-content:space-between;"><span>固定基本薪資：</span><span id="sal-base">$0</span></div>
-                    <div style="display:flex; justify-content:space-between;"><span>累計出勤時數：</span><span id="sal-hours">0 小時</span></div>
-                    <div style="display:flex; justify-content:space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom:10px;"><span>津貼/日薪結算：</span><span id="sal-ot" style="color:#10b981;">+$0</span></div>
-                    <div style="display:flex; justify-content:space-between; font-size:18px; font-weight:bold; margin-top:10px; color:#10b981;"><span>當月應領實領總計：</span><span id="sal-total">$0</span></div>
+            <div class="page-header">
+                <div>
+                    <h2>個人每月實領薪資明細單</h2>
+                    <p>Monthly Payroll Details</p>
+                </div>
+            </div>
+            
+            <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                <!-- 左側控制與明細卡片 -->
+                <div class="card" style="flex: 1; min-width: 320px; max-width: 550px;">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label><i class="fa-solid fa-calendar-check" style="color:var(--primary-blue)"></i> 請選擇欲查詢的薪資月份</label>
+                        <select id="salary-month-select" onchange="renderSalaryDetails()">
+                            <!-- 將由 JavaScript 動態填入近幾個月 -->
+                        </select>
+                    </div>
+
+                    <h3 id="salary-month-title" style="color: #1e3a8a; margin-bottom:15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">薪資明細摘要</h3>
+                    
+                    <!-- 薪資主要渲染區塊 -->
+                    <div id="salary-details-box">
+                        <!-- 資料由底下的 JS 即時動態生成 -->
+                    </div>
+                </div>
+
+                <!-- 右側薪資規範溫馨提醒 -->
+                <div class="card" style="width: 300px; background: rgba(255,255,255,0.7); border-left: 4px solid #f59e0b;">
+                    <h4 style="color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-circle-info"></i> 佑誠工程行計薪規範</h4>
+                    <p style="font-size: 13px; color: #475569; line-height: 1.6;">
+                        1. 公司每月薪資一律<b>結算至當月最後一日（31日）</b>。<br><br>
+                        2. 依內部財務流程，<b>尚未渡過當月31日</b>，因差勤天數與獎懲細目尚未完全確立，系統<b>不提前開放或跳出</b>該月份之預估薪資金額。
+                    </p>
                 </div>
             </div>
         </section>
@@ -475,6 +501,106 @@
         document.getElementById('loading-screen').style.display = show ? 'flex' : 'none'; 
     }
 
+    // 初始化薪資月份下拉選單
+    function initSalaryMonths() {
+        const select = document.getElementById('salary-month-select');
+        if (!select) return;
+        select.innerHTML = '';
+        
+        const now = new Date();
+        // 帶入近6個月
+        for (let i = 0; i < 6; i++) {
+            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const option = document.createElement('option');
+            option.value = `${yyyy}-${mm}`;
+            option.innerText = `${yyyy} 年 ${mm} 月`;
+            select.appendChild(option);
+        }
+    }
+
+    // 渲染個人薪資明細 (核心功能)
+    window.renderSalaryDetails = function() {
+        const select = document.getElementById('salary-month-select');
+        const box = document.getElementById('salary-details-box');
+        if (!select || !box || !currentUserProfile) return;
+
+        const selectedMonthStr = select.value; // "YYYY-MM"
+        document.getElementById('salary-month-title').innerText = `${selectedMonthStr} 月份薪資結算明細`;
+
+        // 規則驗證：取得當前的年、月、日
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+        const currentDay = now.getDate();
+
+        const [selYear, selMonth] = selectedMonthStr.split('-').map(Number);
+
+        // 如果選擇的月份是「今年當月或未來的月份」，且目前日期還沒過 31 日，則隱藏不給看
+        if ((selYear > currentYear) || (selYear === currentYear && selMonth >= currentMonth)) {
+            if (currentDay < 31) {
+                box.innerHTML = `
+                    <div style="text-align: center; padding: 40px 10px; color: #ef4444; font-weight: bold;">
+                        <i class="fa-solid fa-lock" style="font-size: 32px; margin-bottom: 12px; display: block;"></i>
+                        當前月份尚未渡過 31 日結算點，不予跳出預估薪資金額！
+                    </div>`;
+                return;
+            }
+        }
+
+        // 通過驗證，開始計算該月出勤數據
+        const myClocks = cachedClockRecords.filter(c => c.email === currentUserProfile.email && c.date.startsWith(selectedMonthStr) && (c.type === '上班' || c.type === '下班'));
+        const daysCount = [...new Set(myClocks.map(c => c.date))].length;
+        
+        const baseSalary = currentUserProfile.baseSalary || 32000;
+        const dailyRateAddition = daysCount * 1500; // 假設每日津貼加給 1500
+
+        // 模擬加薪與減薪明細項目（實際專案可從資料庫撈取，此處提供標準範本展示）
+        let bonusAmount = 0;
+        let penaltyAmount = 0;
+        let bonusHtml = '';
+        let penaltyHtml = '';
+
+        if (daysCount >= 20) {
+            bonusAmount += 2000;
+            bonusHtml += `<div class="salary-row" style="color:#10b981;"><span>➕ 全勤優秀獎勵金</span><span>+$2,000</span></div>`;
+        }
+        if (daysCount > 0) {
+            bonusAmount += 1200;
+            bonusHtml += `<div class="salary-row" style="color:#10b981;"><span>➕ 工地現場專案津貼</span><span>+$1,200</span></div>`;
+        } else {
+            bonusHtml += `<div style="font-size:13px; color:#94a3b8; padding: 5px 0;">無任何加薪項目</div>`;
+        }
+
+        // 減薪範案
+        if (daysCount === 0) {
+            penaltyAmount += 1000;
+            penaltyHtml += `<div class="salary-row" style="color:#ef4444;"><span>➖ 本月未到工扣款</span><span>-$1,000</span></div>`;
+        } else {
+            penaltyHtml += `<div style="font-size:13px; color:#94a3b8; padding: 5px 0;">無任何扣減薪資項目</div>`;
+        }
+
+        const grandTotal = baseSalary + dailyRateAddition + bonusAmount - penaltyAmount;
+
+        box.innerHTML = `
+            <div class="salary-row"><span>固定基本底薪：</span><b>$${baseSalary.toLocaleString()}</b></div>
+            <div class="salary-row"><span>累計實際出勤天數：</span><b>${daysCount} 天</b></div>
+            <div class="salary-row"><span>出勤津貼加給結算：</span><b style="color:#10b981;">+$${dailyRateAddition.toLocaleString()}</b></div>
+            
+            <h4 style="margin: 15px 0 8px; font-size:14px; color:#475569;"><i class="fa-solid fa-circle-plus" style="color:#10b981"></i> 本月特別加薪項目明細</h4>
+            ${bonusHtml}
+
+            <h4 style="margin: 15px 0 8px; font-size:14px; color:#475569;"><i class="fa-solid fa-circle-minus" style="color:#ef4444"></i> 本月特殊減薪項目明細</h4>
+            ${penaltyHtml}
+
+            <div style="display:flex; justify-content:space-between; font-size:19px; font-weight:bold; margin-top:20px; padding-top:15px; border-top: 2px solid #0088cc; color:#10b981;">
+                <span>💰 該月應領實領總計：</span>
+                <span>$${grandTotal.toLocaleString()}</span>
+            </div>
+        `;
+    };
+
     onAuthStateChanged(auth, (user) => {
         if (user) {
             onValue(ref(db, `users/${user.uid}`), (snapshot) => {
@@ -507,6 +633,7 @@
                 } else {
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
                 }
+                initSalaryMonths();
                 initDataListeners();
                 showLoading(false);
             });
@@ -609,7 +736,7 @@
             alert('請假單已成功送出，老闆端管理控制台已同步收到申請！'); 
             document.getElementById('leave-time-slot').value = '';
             document.getElementById('leave-reason').value = '';
-            navTo('my-requests'); // 自動切換到審核進度頁面
+            navTo('my-requests');
         }).catch(err => {
             showLoading(false); 
             alert("假單發送失敗：" + err.message);
@@ -762,6 +889,7 @@
             `).join('');
 
             renderUserHistory('all');
+            renderSalaryDetails(); // 差勤紀錄更新時，連動更新薪資
 
             if(currentUserProfile.role === 'admin') {
                 document.getElementById('admin-full-tbody').innerHTML = list.map(i => `<tr><td>${i.name}</td><td>${i.type}</td><td>${i.date}</td><td>${i.time}</td><td>${i.note}</td></tr>`).join('');
@@ -806,23 +934,13 @@
                 };
             }
 
-            const me = usersData[currentUserProfile.uid];
-            if(me) {
-                const myClocks = cachedClockRecords.filter(c => c.email === me.email && (c.type === '上班' || c.type === '下班'));
-                const days = [...new Set(myClocks.map(c => c.date))].length;
-                document.getElementById('sal-base').innerText = `$${me.baseSalary || 32000}`;
-                document.getElementById('sal-hours').innerText = `${days * 8} 小時 (累計出勤 ${days} 天)`;
-                document.getElementById('sal-ot').innerText = `+$${days * 1500} (以每日加給估算)`;
-                document.getElementById('sal-total').innerText = `$${(me.baseSalary || 32000) + (days * 1500)}`;
-            }
+            renderSalaryDetails(); // 員工檔案更新時，連動更新薪資
         });
 
-        // 監聽並同時渲染「老闆核准控制台」與「員工個人案件查詢」
         onValue(ref(db, 'admin_requests'), (snapshot) => {
             const data = snapshot.val() || {};
             const list = Object.entries(data).sort((a,b) => b[1].timestamp - a[1].timestamp);
             
-            // 1. 渲染給老闆看的完整後台控制台 (如果當前使用者是 admin)
             const tbodyAdmin = document.getElementById('admin-leave-tbody');
             if(tbodyAdmin) {
                 tbodyAdmin.innerHTML = list.map(([id, i]) => `
@@ -843,7 +961,6 @@
                 `).join('');
             }
 
-            // 2. 新增：過濾並渲染目前登入員工「自己的」申請案件狀態
             const tbodyUser = document.getElementById('my-requests-tbody');
             if(tbodyUser) {
                 const myRequests = list.filter(([id, i]) => i.uid === currentUserProfile.uid);
