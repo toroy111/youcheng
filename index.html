@@ -1,24 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>佑誠工程行 - 智能管理系統</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sidebar-width: 240px;
+            --topbar-height: 60px;
+            --primary-blue: #0088cc;
+            --glass-bg: rgba(255, 255, 255, 0.9);
+            --sidebar-dark: rgba(30, 41, 59, 0.95);
+        }
 
-編號	目標答案（要猜的詞）
-1	蛋仔派對
-2	Minecraft (當個創世神)
-3	Roblox (機器磚塊)
-4	阿尼亞 (SPY×FAMILY)
-5	吉伊卡哇 (Chiikawa)
-6	寶可夢卡牌 (PTCG)
-7	Switch
-	
-8	奇軒 (Tricking)	
-9	Jelly (香甜布丁)	
-10	抖音 / TikTok	
-11	科目三	
-12	Skibidi Toilet (馬桶人)	
-13	盲盒 / 泡泡瑪特	
-14很可（可以）
-15I人 / E人 (MBTI)
-16蘿蔔刀
-17咕卡
-18自動鉛筆（搖搖筆）
-19智慧手錶 (米兔/小天
-20珍珠奶茶
-21冷氣遙控器    幫我將這21的題目排列成A4的兩張尺寸的圖片讓我可以列印然後作裁剪.... 
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Noto Sans TC', 'Poppins', sans-serif; }
+
+        body {
+            background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1920&q=80') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        #loading-screen { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #ffffff; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; z-index: 10000;
+        }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-blue); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- 登入頁面 (Auth View) --- */
+        #auth-view {
+            height: 100vh; display: flex; justify-content: center; align-items: center; background: rgba(0,0,0,0.4);
+        }
+        .auth-card {
+            background: var(--glass-bg); padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 100%; max-width: 400px; text-align: center; backdrop-filter: blur(10px);
+        }
+        .auth-card h1 { color: #1e3a8a; margin-bottom: 25px; }
+        .form-group { margin-bottom: 15px; text-align: left; }
+        .form-group label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 5px; color: #64748b; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-auth { width: 100%; padding: 12px; background: var(--primary-blue); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 700; font-size: 16px; margin-top: 10px; }
+
+        /* --- 主系統佈局 (Main App) --- */
+        #main-app { display: none; height: 100vh; grid-template-columns: var(--sidebar-width) 1fr; grid-template-rows: var(--topbar-height) 1fr; }
+
+        aside.sidebar {
+            grid-row: 1 / 3; background: var(--sidebar-dark); color: #cbd5e1;
+            display: flex; flex-direction: column; padding: 20px 0; z-index: 1000; overflow-y: auto;
+        }
+        .brand-logo { padding: 0 20px 20px; font-size: 22px; font-weight: 800; color: #38bdf8; letter-spacing: 1px; }
+        .nav-item { 
+            padding: 10px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px; 
+            font-size: 14px; transition: all 0.2s; border-left: 4px solid transparent;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border-left-color: #38bdf8; }
+        .nav-group-title { padding: 15px 20px 5px; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; }
+
+        header.top-bar {
+            grid-column: 2 / 3; background: rgba(255,255,255,0.2); backdrop-filter: blur(5px);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 30px; border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .search-box { background: rgba(255,255,255,0.3); border-radius: 20px; padding: 5px 15px; width: 300px; display: flex; align-items: center; }
+        .search-box input { background: transparent; border: none; outline: none; padding: 5px; width: 100%; color: white; }
+        .user-status { display: flex; align-items: center; gap: 15px; color: white; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; background: #0088cc; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; }
+
+        main.content-area {
+            grid-column: 2 / 3; padding: 30px; overflow-y: auto; background: rgba(241, 245, 249, 0.5);
+        }
+        .page-header { margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .page-header h2 { font-size: 28px; color: #334155; }
+
+        .org-chart { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .dept-card { background: var(--glass-bg); padding: 20px; border-radius: 12px; border-top: 5px solid var(--primary-blue); text-align: center; }
+        .dept-card h4 { margin-bottom: 15px; color: #1e293b; }
+        .employee-list-small { font-size: 13px; color: #64748b; line-height: 2; text-align: left; }
+
+        .card { background: var(--glass-bg); border-radius: 15px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); backdrop-filter: blur(5px); }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; font-size: 14px; margin-top: 10px; }
+        th, td { padding: 12px 15px; border-bottom: 1px solid #f1f5f9; text-align: left; }
+        th { background: #f8fafc; color: #64748b; font-weight: 700; }
+
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; color: white; display: inline-block; }
+        .badge-in { background: #10b981; }
+        .badge-out { background: #ef4444; }
+        .badge-pending { background: #6b7280; }
+
+        .btn-filter { padding: 6px 15px; background: white; border: 1px solid #cbd5e1; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: bold; margin-right: 5px; }
+        
+        /* 聊天室樣式 */
+        .chat-container { height: 350px; border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 10px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .chat-msg { max-width: 70%; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.4; }
+        .chat-msg.self { background: #d9f99d; align-self: flex-end; color: #1e3a8a; }
+        .chat-msg.other { background: white; align-self: flex-start; color: #334155; border: 1px solid #e2e8f0; }
+        
+        .salary-input { width: 100px; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; text-align: right; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="loading-screen"><div class="spinner"></div><p style="margin-top:10px; color:#64748b;">系統同步驗證中...</p></div>
+
+<div id="auth-view">
+    <div class="auth-card">
+        <h1>佑誠工程行</h1>
+        <div class="form-group"><label>企業電子郵件</label><input type="email" id="auth-email" placeholder="example@company.com"></div>
+        <div id="reg-fields" style="display: none;">
+            <div class="form-group"><label>真實姓名</label><input type="text" id="auth-name" placeholder="請輸入姓名"></div>
+            <div class="form-group"><label>申請職稱角色</label><select id="auth-role"><option value="user">一般員工</option><option value="admin">老闆 / 管理員</option></select></div>
+        </div>
+        <div class="form-group" id="pwd-group"><label>密碼</label><input type="password" id="auth-password" placeholder="請輸入密碼"></div>
+        <button class="btn-auth" id="btn-auth-submit">登入系統</button>
+        <p style="margin-top:20px; font-size:14px; color:#64748b; cursor:pointer;" id="btn-toggle-auth">第一次使用？點此註冊同仁帳號</p>
+    </div>
+</div>
+
+<div id="main-app">
+    <aside class="sidebar">
+        <div class="brand-logo">GoFace智能</div>
+        
+        <div class="nav-group-title">主要功能</div>
+        <div class="nav-item active" onclick="navTo('home')"><i class="fa-solid fa-house"></i> 系統總覽</div>
+        <div class="nav-item" onclick="navTo('clock')"><i class="fa-solid fa-clock-rotate-left"></i> 出勤打卡回報</div>
+        <div class="nav-item" onclick="navTo('history')"><i class="fa-solid fa-list-check"></i> 出勤紀錄查詢</div>
+        
+        <div class="nav-group-title">行政申請</div>
+        <div class="nav-item" onclick="navTo('leave')"><i class="fa-solid fa-calendar-plus"></i> 線上請假申請</div>
+        
+        <div class="nav-group-title">公告與互動</div>
+        <div class="nav-item" onclick="navTo('notice')"><i class="fa-solid fa-bullhorn"></i> 公司內部公告</div>
+        <div class="nav-item" onclick="navTo('chat')"><i class="fa-solid fa-comments"></i> 員工內部聊天室</div>
+
+        <div class="admin-only" style="display: none;">
+            <div class="nav-group-title">👑 老闆管理主控台</div>
+            <div class="nav-item" onclick="navTo('admin-data')"><i class="fa-solid fa-database"></i> 全公司流水帳</div>
+            <div class="nav-item" onclick="navTo('admin-payroll')"><i class="fa-solid fa-calculator"></i> 智能薪資結算</div>
+        </div>
+
+        <div style="margin-top: auto; padding: 20px;">
+            <div class="nav-item" id="btn-logout" style="border: 1px solid #ef4444; color: #ef4444; border-radius: 8px;"><i class="fa-solid fa-right-from-bracket"></i> 安全登出</div>
+        </div>
+    </aside>
+
+    <header class="top-bar">
+        <div class="search-box"><i class="fa-solid fa-magnifying-glass" style="color:white; margin-right:10px;"></i><input type="text" placeholder="搜尋同仁、紀錄或文件..."></div>
+        <div class="user-status">
+            <span id="current-time" style="font-family: monospace; font-size: 16px;">00:00:00</span>
+            <span id="display-name" style="font-weight: 700;">載入中...</span>
+            <div class="avatar" id="user-avatar">U</div>
+        </div>
+    </header>
+
+    <main class="content-area">
+        
+        <section id="page-home" class="content-section active">
+            <div class="page-header"><div><h2>公司組織架構</h2><p>Company Structure</p></div></div>
+            <div class="org-chart">
+                <div class="dept-card"><h4>🏢 管理部</h4><div class="employee-list-small">員工: 老闆 (主管)<br>員工: 人事助理</div></div>
+                <div class="dept-card"><h4>🏗️ 工程現場部</h4><div class="employee-list-small">員工: 工務主任<br>員工: 現場工程師</div></div>
+            </div>
+            <div class="card" style="margin-top:30px;">
+                <h3>最新打卡動態摘要</h3>
+                <table>
+                    <thead><tr><th>姓名</th><th>動態類型</th><th>時間</th><th>狀態</th></tr></thead>
+                    <tbody id="home-summary-tbody"><tr><td colspan="4">數據同步中...</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="page-clock" class="content-section">
+            <div class="page-header"><div><h2>出勤打卡回報</h2><p>Attendance Clock-in</p></div></div>
+            <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: start;">
+                <div class="card" style="margin: 0; flex: 1; min-width: 320px;">
+                    <div style="text-align: center; margin-bottom: 20px; background: rgba(0,136,204,0.08); padding: 15px; border-radius: 10px;">
+                        <span style="font-size: 13px; font-weight: bold; color: #0088cc; display: block; margin-bottom: 5px;"><i class="fa-solid fa-clock"></i> 雲端同步時間</span>
+                        <h1 id="clock-page-time" style="font-family: monospace; font-size: 36px; color: #1e293b;">00:00:00</h1>
+                    </div>
+                    <div class="form-group"><label>今日打卡備註</label><textarea id="clock-note" rows="2" placeholder="選填：工作說明項目..."></textarea></div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                        <button class="btn-auth" id="btn-clock-in" style="background:#10b981; margin:0; padding:14px;"><i class="fa-solid fa-sun"></i> 上班打卡</button>
+                        <button class="btn-auth" id="btn-clock-out" style="background:#ef4444; margin:0; padding:14px;"><i class="fa-solid fa-moon"></i> 下班打卡</button>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin: 0; width: 260px; padding: 20px;">
+                    <h4 style="margin-bottom:12px; font-size:15px; color: #1e3a8a;"><i class="fa-solid fa-clipboard-user"></i> 今日狀態</h4>
+                    <div id="today-status-box" style="line-height: 2.2; font-size: 14px;">
+                        <div style="border-bottom: 1px solid #f1f5f9; padding-bottom: 4px;">🌅 上班：<span id="status-in" style="font-weight:bold; color:#64748b;">未打卡</span></div>
+                        <div style="padding-top: 4px;">🌇 下班：<span id="status-out" style="font-weight:bold; color:#64748b;">未打卡</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="page-history" class="content-section">
+            <div class="page-header"><h2>個人出勤紀錄</h2></div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>日期</th><th>動態</th><th>時間</th><th>打卡備註說明</th></tr></thead>
+                    <tbody id="user-history-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="page-leave" class="content-section">
+            <div class="page-header"><div><h2>線上請假申請單</h2><p>Leave Application</p></div></div>
+            <div class="card" style="max-width: 500px; margin: 0;">
+                <div class="form-group">
+                    <label>請假假別</label>
+                    <select id="leave-type">
+                        <option value="事假">事假 (無薪)</option>
+                        <option value="病假">病假 (半薪)</option>
+                        <option value="特休">特休 / 年假</option>
+                        <option value="婚假">婚假</option>
+                        <option value="喪假">喪假</option>
+                        <option value="公假">公假</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>請假日期</label><input type="date" id="leave-date"></div>
+                <div class="form-group"><label>請假事由與說明</label><textarea id="leave-reason" rows="4" placeholder="請詳細填寫原因..."></textarea></div>
+                <button class="btn-auth" id="btn-leave-submit" style="background:var(--primary-blue); font-weight: bold;"><i class="fa-paper-plane far"></i> 送出請假申請單</button>
+            </div>
+        </section>
+
+        <section id="page-notice" class="content-section">
+            <div class="page-header"><h2>公告中心 / 企業內部通知</h2></div>
+            <div class="card admin-only" style="display:none; background: rgba(0,136,204,0.05); border: 1px solid rgba(0,136,204,0.2);">
+                <h3 style="margin-bottom:12px; color: #0088cc;"><i class="fa-solid fa-pen-to-square"></i> 發布新內部重要公告 (老闆專用)</h3>
+                <div class="form-group"><label>公告標題</label><input type="text" id="notice-title" placeholder="請輸入重要公告標題"></div>
+                <div class="form-group"><label>公告詳細內文內容</label><textarea id="notice-content" rows="3" placeholder="請在此填寫向全體同仁宣佈的事項..."></textarea></div>
+                <button class="btn-auth" id="btn-post-notice" style="background:var(--primary-blue); margin:0; width:auto; padding:10px 25px;"><i class="fa-solid fa-bullhorn"></i> 發布公告</button>
+            </div>
+            <div id="notice-list-container"></div>
+        </section>
+
+        <section id="page-chat" class="content-section">
+            <div class="page-header"><h2>內部員工通訊聊天室</h2></div>
+            <div class="card">
+                <div class="chat-container" id="chat-messages-box"></div>
+                <div style="margin-top: 10px; display: flex; gap: 8px;">
+                    <button class="btn-filter" onclick="sendChatMedia('圖片')" style="border-radius:20px; font-size:12px; padding: 6px 12px;"><i class="fa-solid fa-image" style="color:#10b981;"></i> 發送圖片網址</button>
+                    <button class="btn-filter" onclick="sendChatMedia('檔案')" style="border-radius:20px; font-size:12px; padding: 6px 12px;"><i class="fa-solid fa-file-pdf" style="color:#f59e0b;"></i> 發送檔案網址</button>
+                </div>
+                <div style="display: flex; gap:10px; margin-top:10px;">
+                    <input type="text" id="chat-input-text" style="flex:1; padding:12px; border:1px solid #ddd; border-radius:8px;" placeholder="在此輸入訊息，或直接貼上圖片連結...">
+                    <button class="btn-auth" id="btn-chat-send" style="width:100px; margin:0; background:var(--primary-blue); font-weight:bold;">傳送</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="page-admin-data" class="content-section">
+            <div class="page-header"><h2>全公司即時流水帳紀錄</h2></div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>姓名</th><th>類型</th><th>日期</th><th>精準時間</th><th>打卡備註</th></tr></thead>
+                    <tbody id="admin-full-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="page-admin-payroll" class="content-section">
+            <div class="page-header"><h2>智能薪資自動結算與日薪自填系統</h2></div>
+            <div class="card">
+                <div style="margin-bottom:15px; display:flex; align-items:center; gap:10px;">
+                    <i class="fa-solid fa-filter" style="color:#0088cc;"></i>
+                    <input type="text" id="payroll-search-input" oninput="triggerPayrollRender()" style="padding:8px 12px; border:1px solid #ddd; border-radius:6px; width:250px;" placeholder="輸入同仁姓名即可快速搜尋...">
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>員工姓名</th>
+                            <th>打卡總天數</th>
+                            <th>輸入當期日薪 ($)</th>
+                            <th>智能實領薪資結算總計</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-payroll-tbody">
+                        <tr><td colspan="4">載入最新數據中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDfTTRHfVCW-QpAPYuoDA4absfWO9OARcY", 
+        authDomain: "youcheng-656a8.firebaseapp.com",
+        databaseURL: "https://youcheng-656a8-default-rtdb.firebaseio.com",
+        projectId: "youcheng-656a8",
+        storageBucket: "youcheng-656a8.firebasestorage.app",
+        messagingSenderId: "197356167437",
+        appId: "1:197356167437:web:fa86347694f3ab592a5044"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    let isLoginMode = true;
+    let currentUserProfile = null;
+    let cachedClockRecords = [];
+    let cachedUserList = [];
+    let customDailyRates = {}; 
+
+    window.navTo = function(pageId) {
+        document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+        const targetPage = document.getElementById('page-' + pageId);
+        if (targetPage) targetPage.classList.add('active');
+        
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    };
+
+    function showLoading(show) { 
+        document.getElementById('loading-screen').style.display = show ? 'flex' : 'none'; 
+    }
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            onValue(ref(db, `users/${user.uid}`), (snapshot) => {
+                currentUserProfile = snapshot.val();
+                if (currentUserProfile) {
+                    document.getElementById('auth-view').style.display = 'none';
+                    document.getElementById('main-app').style.display = 'grid';
+                    document.getElementById('display-name').innerText = currentUserProfile.name;
+                    document.getElementById('user-avatar').innerText = currentUserProfile.name.charAt(0);
+                    
+                    if (currentUserProfile.role === 'admin') {
+                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                    } else {
+                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+                    }
+                    initDataListeners();
+                }
+                showLoading(false);
+            });
+        } else {
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('auth-view').style.display = 'flex';
+            showLoading(false);
+        }
+    });
+
+    document.getElementById('btn-toggle-auth').addEventListener('click', () => {
+        isLoginMode = !isLoginMode;
+        document.getElementById('reg-fields').style.display = isLoginMode ? 'none' : 'block';
+        document.getElementById('btn-auth-submit').innerText = isLoginMode ? '登入系統' : '完成註冊並開通帳號';
+        document.getElementById('btn-toggle-auth').innerText = isLoginMode ? '第一次使用？點此註冊同仁帳號' : '已有帳號？點此登入';
+    });
+
+    document.getElementById('btn-auth-submit').addEventListener('click', () => {
+        const email = document.getElementById('auth-email').value;
+        const pwd = document.getElementById('auth-password').value;
+        showLoading(true);
+        if (isLoginMode) {
+            signInWithEmailAndPassword(auth, email, pwd).catch(err => { alert("登入失敗: " + err.message); showLoading(false); });
+        } else {
+            const name = document.getElementById('auth-name').value;
+            const role = document.getElementById('auth-role').value;
+            createUserWithEmailAndPassword(auth, email, pwd).then(cred => {
+                set(ref(db, `users/${cred.user.uid}`), { name, email, role, uid: cred.user.uid });
+            }).catch(err => { alert("註冊失敗: " + err.message); showLoading(false); });
+        }
+    });
+
+    function handleClock(type) {
+        if (!currentUserProfile) return;
+        const note = document.getElementById('clock-note').value;
+        const now = new Date();
+        const log = {
+            name: currentUserProfile.name, email: currentUserProfile.email, uid: currentUserProfile.uid,
+            type, date: now.toISOString().split('T')[0],
+            time: now.toLocaleTimeString('zh-TW', {hour12:false}),
+            timestamp: Date.now(), note: note || "正常打卡回報"
+        };
+        showLoading(true);
+        push(ref(db, 'clock_records'), log).then(() => {
+            showLoading(false); 
+            alert(type + '打卡成功！');
+            document.getElementById('clock-note').value = '';
+        }).catch(err => {
+            showLoading(false);
+            alert("打卡失敗: " + err.message);
+        });
+    }
+    document.getElementById('btn-clock-in').addEventListener('click', () => handleClock('上班'));
+    document.getElementById('btn-clock-out').addEventListener('click', () => handleClock('下班'));
+
+    document.getElementById('btn-leave-submit').addEventListener('click', () => {
+        if (!currentUserProfile) return;
+        const leaveType = document.getElementById('leave-type').value;
+        const leaveDate = document.getElementById('leave-date').value;
+        const leaveReason = document.getElementById('leave-reason').value.trim();
+        if (!leaveDate || !leaveReason) { alert('請選擇日期與填寫原因！'); return; }
+
+        showLoading(true);
+        push(ref(db, 'leave_records'), {
+            name: currentUserProfile.name, email: currentUserProfile.email, uid: currentUserProfile.uid,
+            leaveType, date: leaveDate, reason: leaveReason, status: "待審核", timestamp: Date.now()
+        }).then(() => {
+            showLoading(false);
+            alert('請假單已成功送出！');
+            document.getElementById('leave-reason').value = '';
+            navTo('home');
+        }).catch(err => { showLoading(false); alert(err.message); });
+    });
+
+    document.getElementById('btn-chat-send').addEventListener('click', () => {
+        const msgText = document.getElementById('chat-input-text').value.trim();
+        if (!msgText) return;
+        push(ref(db, 'chat_messages'), { name: currentUserProfile.name, text: msgText, type: "text", timestamp: Date.now() })
+        .then(() => { document.getElementById('chat-input-text').value = ''; });
+    });
+
+    window.sendChatMedia = function(mediaType) {
+        const url = prompt(`請輸入您要分享的${mediaType}網址連結：`);
+        if(!url) return;
+        push(ref(db, 'chat_messages'), { name: currentUserProfile.name, text: url, type: mediaType === '圖片' ? 'image' : 'file', timestamp: Date.now() });
+    };
+
+    document.getElementById('btn-post-notice').addEventListener('click', () => {
+        const title = document.getElementById('notice-title').value.trim();
+        const content = document.getElementById('notice-content').value.trim();
+        if(!title || !content) { alert('請填寫完整公告內容！'); return; }
+        push(ref(db, 'notices'), { title, content, date: new Date().toISOString().split('T')[0], timestamp: Date.now() })
+        .then(() => { alert('公告已發布！'); document.getElementById('notice-title').value=''; document.getElementById('notice-content').value=''; });
+    });
+
+    window.updateLocalRate = function(uid, value) {
+        customDailyRates[uid] = parseInt(value) || 0;
+        const days = parseInt(document.getElementById(`days-${uid}`).innerText) || 0;
+        document.getElementById(`total-${uid}`).innerText = `$${days * (customDailyRates[uid])}`;
+    };
+
+    window.triggerPayrollRender = function() {
+        const searchKeyword = document.getElementById('payroll-search-input').value.trim().toLowerCase();
+        const payrollTbody = document.getElementById('admin-payroll-tbody');
+        if (!payrollTbody) return;
+
+        let filteredUsers = cachedUserList;
+        if(searchKeyword) {
+            filteredUsers = cachedUserList.filter(u => u.name.toLowerCase().includes(searchKeyword));
+        }
+
+        payrollTbody.innerHTML = filteredUsers.map(u => {
+            const myClocks = cachedClockRecords.filter(c => c.uid === u.uid && (c.type === '上班' || c.type === '下班'));
+            const daysCount = [...new Set(myClocks.map(c => c.date))].length;
+            if(!customDailyRates[u.uid]) customDailyRates[u.uid] = 1500; 
+
+            return `
+                <tr>
+                    <td><b>${u.name}</b></td>
+                    <td id="days-${u.uid}">${daysCount} 天</td>
+                    <td><input type="number" class="salary-input" value="${customDailyRates[u.uid]}" oninput="updateLocalRate('${u.uid}', this.value)"></td>
+                    <td style="font-weight:bold; color:#1e3a8a;" id="total-${u.uid}">$${daysCount * customDailyRates[u.uid]}</td>
+                </tr>
+            `;
+        }).join('');
+    };
+
+    function initDataListeners() {
+        const todayStr = new Date().toISOString().split('T')[0];
+        if (document.getElementById('leave-date')) document.getElementById('leave-date').value = todayStr;
+
+        onValue(ref(db, 'clock_records'), (snapshot) => {
+            const data = snapshot.val() || {};
+            const list = Object.values(data).sort((a,b) => b.timestamp - a.timestamp);
+            cachedClockRecords = list;
+
+            const myToday = list.filter(i => i.email === currentUserProfile.email && i.date === todayStr);
+            const statusIn = myToday.find(i => i.type === '上班');
+            const statusOut = myToday.find(i => i.type === '下班');
+            
+            document.getElementById('status-in').innerText = statusIn ? `✓ 已打卡 (${statusIn.time})` : '□ 未打卡';
+            document.getElementById('status-in').style.color = statusIn ? '#10b981' : '#64748b';
+            document.getElementById('status-out').innerText = statusOut ? `✓ 已打卡 (${statusOut.time})` : '□ 未打卡';
+            document.getElementById('status-out').style.color = statusOut ? '#10b981' : '#64748b';
+
+            document.getElementById('home-summary-tbody').innerHTML = list.slice(0, 5).map(i => `
+                <tr><td>${i.name}</td><td>${i.type}</td><td>${i.time}</td><td><span class="badge ${i.type==='上班'?'badge-in':'badge-out'}">已回報</span></td></tr>
+            `).join('');
+
+            const myHistory = list.filter(i => i.email === currentUserProfile.email);
+            document.getElementById('user-history-tbody').innerHTML = myHistory.map(i => `
+                <tr><td>${i.date}</td><td>${i.type}</td><td>${i.time}</td><td>${i.note}</td></tr>
+            `).join('');
+
+            if(currentUserProfile.role === 'admin') {
+                const adminTbody = document.getElementById('admin-full-tbody');
+                if(adminTbody) adminTbody.innerHTML = list.map(i => `<tr><td>${i.name}</td><td>${i.type}</td><td>${i.date}</td><td>${i.time}</td><td>${i.note}</td></tr>`).join('');
+                triggerPayrollRender();
+            }
+        });
+
+        onValue(ref(db, 'users'), (snapshot) => {
+            const usersData = snapshot.val() || {};
+            cachedUserList = Object.values(usersData);
+            if(currentUserProfile.role === 'admin') triggerPayrollRender();
+        });
+
+        onValue(ref(db, 'notices'), (snapshot) => {
+            const data = snapshot.val() || {};
+            const list = Object.values(data).sort((a,b) => b.timestamp - a.timestamp);
+            document.getElementById('notice-list-container').innerHTML = list.map(i => `
+                <div class="card">
+                    <div style="display:flex; justify-content:space-between;"><h4 style="color:#1e3a8a;">📢 ${i.title}</h4><small style="color:#94a3b8;">${i.date}</small></div>
+                    <p style="font-size:14px; color:#475569; margin-top:8px; white-space: pre-wrap;">${i.content}</p>
+                </div>
+            `).join('');
+        });
+
+        onValue(ref(db, 'chat_messages'), (snapshot) => {
+            const data = snapshot.val() || {};
+            const list = Object.values(data);
+            const box = document.getElementById('chat-messages-box');
+            box.innerHTML = list.map(i => {
+                const isSelf = i.name === currentUserProfile.name;
+                let body = i.text;
+                if(i.type === "image" || i.text.startsWith("http://") || i.text.startsWith("https://")) {
+                    if (i.type === "file") {
+                        body = `<a href="${i.text}" target="_blank" style="color:#0088cc; font-weight:bold; text-decoration:underline;"><i class="fa-solid fa-file-arrow-down"></i> 點此下載同仁分享的外部檔案</a>`;
+                    } else {
+                        body = `<a href="${i.text}" target="_blank"><img src="${i.text}" style="max-width:100%; max-height:150px; border-radius:8px; display:block; margin-top:5px; border:1px solid #ddd;" onerror="this.src='https://placehold.co/200x100?text=圖片連結';"></a>`;
+                    }
+                }
+                return `<div class="chat-msg ${isSelf?'self':'other'}"><b>${i.name}</b>：<div>${body}</div></div>`;
+            }).join('');
+            box.scrollTop = box.scrollHeight;
+        });
+    }
+
+    document.getElementById('btn-logout').addEventListener('click', () => signOut(auth));
+
+    setInterval(() => {
+        const timeString = new Date().toLocaleTimeString('zh-TW', {hour12:false});
+        document.getElementById('current-time').innerText = timeString;
+        const pageClock = document.getElementById('clock-page-time');
+        if(pageClock) pageClock.innerText = timeString;
+    }, 1000);
+</script>
+
+</body>
+</html>
