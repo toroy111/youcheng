@@ -456,26 +456,46 @@
         document.getElementById('loading-screen').style.display = show ? 'flex' : 'none'; 
     }
 
+    // 當登入狀態改變時
     onAuthStateChanged(auth, (user) => {
         if (user) {
             onValue(ref(db, `users/${user.uid}`), (snapshot) => {
-                currentUserProfile = snapshot.val();
-                if (currentUserProfile) {
-                    document.getElementById('auth-view').style.display = 'none';
-                    document.getElementById('main-app').style.display = 'grid';
-                    document.getElementById('display-name').innerText = currentUserProfile.name;
-                    document.getElementById('user-avatar').innerText = currentUserProfile.name.charAt(0);
-                    
-                    if (currentUserProfile.role === 'admin') {
-                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                    } else {
-                        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-                    }
-                    initDataListeners();
+                let profileData = snapshot.val();
+                
+                // 【安全防護 1】如果資料庫節點不存在或不完整，自動幫他建立基本檔，防止程式崩潰
+                if (!profileData) {
+                    profileData = {
+                        name: user.email.split('@')[0], // 拿 Email 前綴當臨時姓名
+                        email: user.email,
+                        role: 'user',
+                        uid: user.uid,
+                        baseSalary: 32000,
+                        hourlyRate: 190
+                    };
+                    set(ref(db, `users/${user.uid}`), profileData);
+                } else if (!profileData.uid) {
+                    // 如果有節點但唯獨漏了 uid 欄位，手動幫他補齊
+                    profileData.uid = user.uid;
+                    update(ref(db, `users/${user.uid}`), { uid: user.uid });
                 }
+
+                currentUserProfile = profileData;
+                
+                document.getElementById('auth-view').style.display = 'none';
+                document.getElementById('main-app').style.display = 'grid';
+                document.getElementById('display-name').innerText = currentUserProfile.name;
+                document.getElementById('user-avatar').innerText = currentUserProfile.name.charAt(0);
+                
+                if (currentUserProfile.role === 'admin') {
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
+                } else {
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
+                }
+                initDataListeners();
                 showLoading(false);
             });
         } else {
+            currentUserProfile = null;
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('auth-view').style.display = 'flex';
             showLoading(false);
@@ -509,23 +529,29 @@
         }
     });
 
-    // 整合地點資訊的打卡邏輯
+    // 出勤打卡邏輯（已加上強固型防錯機制）
     function handleClock(type) {
-        if (!currentUserProfile) return;
+        // 【安全防護 2】多一重檢查，防止帳號同步未完成前點擊
+        if (!auth.currentUser) { alert('帳號未正常登入，請重新登入後再試！'); return; }
+        if (!currentUserProfile) { alert('同仁資料同步中，請稍候三秒再試！'); return; }
+        
         const location = document.getElementById('clock-location').value.trim();
         const note = document.getElementById('clock-note').value.trim();
         
         if (!location) { alert('請填寫打卡地點！'); return; }
         
         const now = new Date();
-        // 將地點與備註合併儲存，確保呈現在流水帳與歷史紀錄中
         const combinedNote = `【地點: ${location}】${note ? ' 備註: ' + note : ''}`;
         
         const log = {
-            name: currentUserProfile.name, email: currentUserProfile.email, uid: currentUserProfile.uid,
-            type, date: now.toISOString().split('T')[0],
+            name: currentUserProfile.name || auth.currentUser.email.split('@')[0], 
+            email: auth.currentUser.email, 
+            uid: auth.currentUser.uid, // 直接改用驗證核心的 UID，100% 絕對不會出錯
+            type, 
+            date: now.toISOString().split('T')[0],
             time: now.toLocaleTimeString('zh-TW', {hour12:false}),
-            timestamp: Date.now(), note: combinedNote
+            timestamp: Date.now(), 
+            note: combinedNote
         };
         showLoading(true);
         push(ref(db, 'clock_records'), log).then(() => {
@@ -533,43 +559,70 @@
             alert(type + '打卡成功！\n記錄時間：' + log.time + '\n打卡地點：' + location);
             document.getElementById('clock-note').value = '';
             document.getElementById('clock-location').value = '';
+        }).catch(err => {
+            showLoading(false);
+            alert("打卡資料寫入失敗：" + err.message);
         });
     }
     document.getElementById('btn-clock-in').addEventListener('click', () => handleClock('上班'));
     document.getElementById('btn-clock-out').addEventListener('click', () => handleClock('下班'));
 
+    // 請假單發送邏輯（已加上強固型防錯機制）
     document.getElementById('btn-leave-submit').addEventListener('click', () => {
+        if (!auth.currentUser) { alert('帳號未正常登入，請重新登入！'); return; }
+        if (!currentUserProfile) { alert('資料同步中，請稍候再試！'); return; }
+
         const leaveType = document.getElementById('leave-type').value;
         const leaveDate = document.getElementById('leave-date').value;
         const leaveTimeSlot = document.getElementById('leave-time-slot').value.trim() || "全天";
         const leaveReason = document.getElementById('leave-reason').value.trim();
         if (!leaveDate || !leaveReason) { alert('請完整填寫請假日期與理由事由！'); return; }
 
+        showLoading(true); // 開啟轉圈圈
+
         push(ref(db, 'admin_requests'), {
-            name: currentUserProfile.name, email: currentUserProfile.email, uid: currentUserProfile.uid,
-            reqType: "請假申請", subType: leaveType, date: leaveDate, info: leaveTimeSlot, reason: leaveReason, status: "待審核", timestamp: Date.now()
+            name: currentUserProfile.name || auth.currentUser.email.split('@')[0], 
+            email: auth.currentUser.email, 
+            uid: auth.currentUser.uid, // 修正：直接用底層機制發送 UID，絕不遺失
+            reqType: "請假申請", 
+            subType: leaveType, 
+            date: leaveDate, 
+            info: leaveTimeSlot, 
+            reason: leaveReason, 
+            status: "待審核", 
+            timestamp: Date.now()
         }).then(() => { 
-            alert('請假單已成功送出，等待主管簽核！'); 
+            showLoading(false); // 成功後關閉轉圈圈
+            alert('請假單已成功送出，老闆端管理控制台已同步收到申請！'); 
             document.getElementById('leave-time-slot').value = '';
             document.getElementById('leave-reason').value = '';
             navTo('home'); 
+        }).catch(err => {
+            showLoading(false); // 失敗也要關閉轉圈圈
+            alert("假單發送失敗：" + err.message);
         });
     });
 
     document.getElementById('btn-ot-submit').addEventListener('click', () => {
+        if (!auth.currentUser) { alert('帳號未正常登入！'); return; }
         const otDate = document.getElementById('ot-date').value;
         const otHours = document.getElementById('ot-hours').value;
         const otReason = document.getElementById('ot-reason').value.trim();
         if (!otDate || !otHours || !otReason) { alert('請填妥所有加班申報欄位！'); return; }
 
+        showLoading(true);
         push(ref(db, 'admin_requests'), {
-            name: currentUserProfile.name, email: currentUserProfile.email, uid: currentUserProfile.uid,
+            name: currentUserProfile.name || auth.currentUser.email.split('@')[0], 
+            email: auth.currentUser.email, 
+            uid: auth.currentUser.uid,
             reqType: "加班申請", subType: "加班費", date: otDate, info: otHours, reason: otReason, status: "待審核", timestamp: Date.now()
-        }).then(() => { alert('加班申請已送出！'); navTo('home'); });
+        }).then(() => { showLoading(false); alert('加班申請已送出！'); navTo('home'); })
+          .catch(err => { showLoading(false); alert("申報失敗: " + err.message); });
     });
 
     document.getElementById('btn-profile-save').addEventListener('click', () => {
-        update(ref(db, `users/${currentUserProfile.uid}`), {
+        if (!auth.currentUser) return;
+        update(ref(db, `users/${auth.currentUser.uid}`), {
             phone: document.getElementById('prof-phone').value,
             line: document.getElementById('prof-line').value,
             emergency: document.getElementById('prof-emergency').value
@@ -577,6 +630,7 @@
     });
 
     document.getElementById('btn-chat-send').addEventListener('click', () => {
+        if (!currentUserProfile) return;
         const msgText = document.getElementById('chat-input-text').value.trim();
         if (!msgText) return;
         push(ref(db, 'chat_messages'), {
@@ -585,6 +639,7 @@
     });
 
     window.sendChatMedia = function(mediaType) {
+        if (!currentUserProfile) return;
         const url = prompt(`請輸入您要分享的${mediaType}連結網址：`);
         if(!url) return;
         push(ref(db, 'chat_messages'), {
@@ -615,7 +670,7 @@
 
     function renderUserHistory(filterType) {
         const tbody = document.getElementById('user-history-tbody');
-        if (!tbody) return;
+        if (!tbody || !currentUserProfile) return;
         let filtered = cachedClockRecords.filter(i => i.email === currentUserProfile.email);
         
         const now = new Date();
@@ -671,9 +726,8 @@
     };
 
     function initDataListeners() {
+        if (!currentUserProfile) return;
         const todayStr = new Date().toISOString().split('T')[0];
-        document.getElementById('leave-date').value = todayStr;
-        document.getElementById('ot-date').value = todayStr;
 
         onValue(ref(db, 'clock_records'), (snapshot) => {
             const data = snapshot.val() || {};
@@ -684,8 +738,10 @@
             ['上班', '下班'].forEach(t => {
                 const found = myToday.find(i => i.type === t);
                 const idMap = {'上班':'status-in','下班':'status-out'};
-                document.getElementById(idMap[t]).innerText = found ? `✓ 已打卡 (${found.time})` : '□ 未打卡';
-                document.getElementById(idMap[t]).style.color = found ? '#10b981' : '#64748b';
+                if(document.getElementById(idMap[t])) {
+                    document.getElementById(idMap[t]).innerText = found ? `✓ 已打卡 (${found.time})` : '□ 未打卡';
+                    document.getElementById(idMap[t]).style.color = found ? '#10b981' : '#64748b';
+                }
             });
 
             document.getElementById('home-summary-tbody').innerHTML = list.slice(0, 5).map(i => `
@@ -812,7 +868,7 @@
 
     setInterval(() => {
         const timeString = new Date().toLocaleTimeString('zh-TW', {hour12:false});
-        document.getElementById('current-time').innerText = timeString;
+        if(document.getElementById('current-time')) document.getElementById('current-time').innerText = timeString;
         const pageClock = document.getElementById('clock-page-time');
         if(pageClock) pageClock.innerText = timeString;
     }, 1000);
