@@ -142,6 +142,7 @@
         <div class="nav-group-title">行政申請</div>
         <div class="nav-item" onclick="navTo('leave')"><i class="fa-solid fa-calendar-plus"></i> 線上請假申請</div>
         <div class="nav-item" onclick="navTo('overtime')"><i class="fa-solid fa-business-time"></i> 線上加班申請</div>
+        <div class="nav-item" onclick="navTo('my-requests')"><i class="fa-solid fa-magnifying-glass-chart"></i> 審核案件查詢</div>
         <div class="nav-item" onclick="navTo('salary')"><i class="fa-solid fa-money-check-dollar"></i> 個人薪資查詢</div>
         
         <div class="nav-group-title">互動中心</div>
@@ -191,7 +192,6 @@
             </div>
         </section>
 
-        <!-- 1. 打卡功能修改版 -->
         <section id="page-clock" class="content-section">
             <div class="page-header"><div><h2>出勤打卡回報</h2><p>Attendance Clock-in</p></div></div>
             <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: start;">
@@ -201,7 +201,6 @@
                         <h1 id="clock-page-time" style="font-family: monospace; font-size: 36px; color: #1e293b;">00:00:00</h1>
                     </div>
                     
-                    <!-- 新增打卡地點填寫 -->
                     <h3 style="margin-bottom:12px; font-size:16px;"><i class="fa-solid fa-location-dot" style="color:#ef4444;"></i> 填寫打卡地點</h3>
                     <div class="form-group"><input type="text" id="clock-location" placeholder="例如：台北總部辦公室、桃園工務現場、外派A工地..."></div>
 
@@ -239,7 +238,6 @@
             </div>
         </section>
 
-        <!-- 2. 簽核功能（請假申請）修改版 -->
         <section id="page-leave" class="content-section">
             <div class="page-header"><div><h2>線上請假申請單</h2><p>Leave Application</p></div></div>
             <div class="card" style="max-width: 500px; margin: 0;">
@@ -255,7 +253,6 @@
                     </select>
                 </div>
                 <div class="form-group"><label>請假日期</label><input type="date" id="leave-date"></div>
-                <!-- 欄位優化：提供明確的時間填寫範例 -->
                 <div class="form-group"><label>請假具體時間段</label><input type="text" id="leave-time-slot" placeholder="例如：09:00 ~ 12:00 (共 3 小時) 或 全天"></div>
                 <div class="form-group"><label>請假理由與具事由</label><textarea id="leave-reason" rows="3" placeholder="請詳細填寫您請假的具體原因理由..."></textarea></div>
                 <button class="btn-auth" id="btn-leave-submit" style="background:var(--primary-blue); font-weight: bold;"><i class="fa-paper-plane far"></i> 送出請假申請單</button>
@@ -269,6 +266,28 @@
                 <div class="form-group"><label>加班時段</label><input type="text" id="ot-hours" placeholder="例如：18:00 ~ 20:00 (共 2 小時)"></div>
                 <div class="form-group"><label>工作原因與內容</label><textarea id="ot-reason" rows="3" placeholder="例如：工程進度趕工、月底盤點項目..."></textarea></div>
                 <button class="btn-auth" id="btn-ot-submit" style="background:#10b981; font-weight: bold;">確認申報加班</button>
+            </div>
+        </section>
+
+        <section id="page-my-requests" class="content-section">
+            <div class="page-header"><div><h2>審核案件進度查詢</h2><p>My Applications Status</p></div></div>
+            <div class="card">
+                <h3>您的假單與加班單審核狀況</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>申請日期</th>
+                            <th>類別</th>
+                            <th>假別/項目</th>
+                            <th>時間時段</th>
+                            <th>具體原因事由</th>
+                            <th>審核狀態</th>
+                        </tr>
+                    </thead>
+                    <tbody id="my-requests-tbody">
+                        <tr><td colspan="6" style="text-align:center; color:#94a3b8;">載入您的雲端簽核單據中...</td></tr>
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -456,16 +475,14 @@
         document.getElementById('loading-screen').style.display = show ? 'flex' : 'none'; 
     }
 
-    // 當登入狀態改變時
     onAuthStateChanged(auth, (user) => {
         if (user) {
             onValue(ref(db, `users/${user.uid}`), (snapshot) => {
                 let profileData = snapshot.val();
                 
-                // 【安全防護 1】如果資料庫節點不存在或不完整，自動幫他建立基本檔，防止程式崩潰
                 if (!profileData) {
                     profileData = {
-                        name: user.email.split('@')[0], // 拿 Email 前綴當臨時姓名
+                        name: user.email.split('@')[0], 
                         email: user.email,
                         role: 'user',
                         uid: user.uid,
@@ -474,7 +491,6 @@
                     };
                     set(ref(db, `users/${user.uid}`), profileData);
                 } else if (!profileData.uid) {
-                    // 如果有節點但唯獨漏了 uid 欄位，手動幫他補齊
                     profileData.uid = user.uid;
                     update(ref(db, `users/${user.uid}`), { uid: user.uid });
                 }
@@ -529,9 +545,7 @@
         }
     });
 
-    // 出勤打卡邏輯（已加上強固型防錯機制）
     function handleClock(type) {
-        // 【安全防護 2】多一重檢查，防止帳號同步未完成前點擊
         if (!auth.currentUser) { alert('帳號未正常登入，請重新登入後再試！'); return; }
         if (!currentUserProfile) { alert('同仁資料同步中，請稍候三秒再試！'); return; }
         
@@ -546,7 +560,7 @@
         const log = {
             name: currentUserProfile.name || auth.currentUser.email.split('@')[0], 
             email: auth.currentUser.email, 
-            uid: auth.currentUser.uid, // 直接改用驗證核心的 UID，100% 絕對不會出錯
+            uid: auth.currentUser.uid, 
             type, 
             date: now.toISOString().split('T')[0],
             time: now.toLocaleTimeString('zh-TW', {hour12:false}),
@@ -567,7 +581,6 @@
     document.getElementById('btn-clock-in').addEventListener('click', () => handleClock('上班'));
     document.getElementById('btn-clock-out').addEventListener('click', () => handleClock('下班'));
 
-    // 請假單發送邏輯（已加上強固型防錯機制）
     document.getElementById('btn-leave-submit').addEventListener('click', () => {
         if (!auth.currentUser) { alert('帳號未正常登入，請重新登入！'); return; }
         if (!currentUserProfile) { alert('資料同步中，請稍候再試！'); return; }
@@ -578,12 +591,12 @@
         const leaveReason = document.getElementById('leave-reason').value.trim();
         if (!leaveDate || !leaveReason) { alert('請完整填寫請假日期與理由事由！'); return; }
 
-        showLoading(true); // 開啟轉圈圈
+        showLoading(true);
 
         push(ref(db, 'admin_requests'), {
             name: currentUserProfile.name || auth.currentUser.email.split('@')[0], 
             email: auth.currentUser.email, 
-            uid: auth.currentUser.uid, // 修正：直接用底層機制發送 UID，絕不遺失
+            uid: auth.currentUser.uid, 
             reqType: "請假申請", 
             subType: leaveType, 
             date: leaveDate, 
@@ -592,13 +605,13 @@
             status: "待審核", 
             timestamp: Date.now()
         }).then(() => { 
-            showLoading(false); // 成功後關閉轉圈圈
+            showLoading(false); 
             alert('請假單已成功送出，老闆端管理控制台已同步收到申請！'); 
             document.getElementById('leave-time-slot').value = '';
             document.getElementById('leave-reason').value = '';
-            navTo('home'); 
+            navTo('my-requests'); // 自動切換到審核進度頁面
         }).catch(err => {
-            showLoading(false); // 失敗也要關閉轉圈圈
+            showLoading(false); 
             alert("假單發送失敗：" + err.message);
         });
     });
@@ -616,7 +629,7 @@
             email: auth.currentUser.email, 
             uid: auth.currentUser.uid,
             reqType: "加班申請", subType: "加班費", date: otDate, info: otHours, reason: otReason, status: "待審核", timestamp: Date.now()
-        }).then(() => { showLoading(false); alert('加班申請已送出！'); navTo('home'); })
+        }).then(() => { showLoading(false); alert('加班申請已送出！'); navTo('my-requests'); })
           .catch(err => { showLoading(false); alert("申報失敗: " + err.message); });
     });
 
@@ -804,12 +817,15 @@
             }
         });
 
+        // 監聽並同時渲染「老闆核准控制台」與「員工個人案件查詢」
         onValue(ref(db, 'admin_requests'), (snapshot) => {
             const data = snapshot.val() || {};
             const list = Object.entries(data).sort((a,b) => b[1].timestamp - a[1].timestamp);
-            const tbody = document.getElementById('admin-leave-tbody');
-            if(tbody) {
-                tbody.innerHTML = list.map(([id, i]) => `
+            
+            // 1. 渲染給老闆看的完整後台控制台 (如果當前使用者是 admin)
+            const tbodyAdmin = document.getElementById('admin-leave-tbody');
+            if(tbodyAdmin) {
+                tbodyAdmin.innerHTML = list.map(([id, i]) => `
                     <tr>
                         <td>${i.name}</td>
                         <td><b>${i.reqType}</b></td>
@@ -825,6 +841,32 @@
                         </td>
                     </tr>
                 `).join('');
+            }
+
+            // 2. 新增：過濾並渲染目前登入員工「自己的」申請案件狀態
+            const tbodyUser = document.getElementById('my-requests-tbody');
+            if(tbodyUser) {
+                const myRequests = list.filter(([id, i]) => i.uid === currentUserProfile.uid);
+                if(myRequests.length === 0) {
+                    tbodyUser.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#64748b; padding:15px;">您目前沒有任何歷史申請單據紀錄。</td></tr>`;
+                } else {
+                    tbodyUser.innerHTML = myRequests.map(([id, i]) => {
+                        let statusBadgeColor = 'badge-pending';
+                        if(i.status === '核准') statusBadgeColor = 'badge-approved';
+                        if(i.status === '駁回') statusBadgeColor = 'badge-rejected';
+
+                        return `
+                            <tr>
+                                <td>${i.date}</td>
+                                <td><b>${i.reqType}</b></td>
+                                <td><span class="badge badge-pending" style="background:#0088cc;">${i.subType}</span></td>
+                                <td>${i.info}</td>
+                                <td style="color:#475569;">${i.reason}</td>
+                                <td><span class="badge ${statusBadgeColor}">${i.status}</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
             }
         });
 
