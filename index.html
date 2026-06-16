@@ -108,7 +108,9 @@
         
         /* 薪資日薪填寫專用樣式 */
         .salary-input { width: 90px; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 5px; text-align: right; font-weight: bold; color: #0f172a; }
+        .seniority-input { width: 65px; padding: 5px 5px; border: 1px solid #cbd5e1; border-radius: 5px; text-align: center; color: #334155; }
         .salary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed #e2e8f0; font-size: 14px; }
+        .payroll-detail-sub { font-size: 11px; color: #64748b; margin-top: 2px; line-height: 1.3; font-weight: normal; }
     </style>
 </head>
 <body>
@@ -292,7 +294,6 @@
             </div>
         </section>
 
-        <!-- 升級版功能：個人每月實領薪資明細單 -->
         <section id="page-salary" class="content-section">
             <div class="page-header">
                 <div>
@@ -302,24 +303,19 @@
             </div>
             
             <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-                <!-- 左側控制與明細卡片 -->
                 <div class="card" style="flex: 1; min-width: 320px; max-width: 550px;">
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label><i class="fa-solid fa-calendar-check" style="color:var(--primary-blue)"></i> 請選擇欲查詢的薪資月份</label>
                         <select id="salary-month-select" onchange="renderSalaryDetails()">
-                            <!-- 將由 JavaScript 動態填入近幾個月 -->
                         </select>
                     </div>
 
                     <h3 id="salary-month-title" style="color: #1e3a8a; margin-bottom:15px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px;">薪資明細摘要</h3>
                     
-                    <!-- 薪資主要渲染區塊 -->
                     <div id="salary-details-box">
-                        <!-- 資料由底下的 JS 即時動態生成 -->
                     </div>
                 </div>
 
-                <!-- 右側薪資規範溫馨提醒 -->
                 <div class="card" style="width: 300px; background: rgba(255,255,255,0.7); border-left: 4px solid #f59e0b;">
                     <h4 style="color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-circle-info"></i> 佑誠工程行計薪規範</h4>
                     <p style="font-size: 13px; color: #475569; line-height: 1.6;">
@@ -422,7 +418,7 @@
 
         <section id="page-admin-payroll" class="content-section">
             <div class="page-header">
-                <h2>智能薪資自動結算與手動日薪自填系統</h2>
+                <h2>👑 智能薪資結構結算與自訂考勤系統</h2>
                 <button class="btn-filter" style="background:#10b981; color:white; border:none; padding:8px 15px;" id="btn-export-salary"><i class="fa-solid fa-file-excel"></i> 一鍵匯出薪資總表 (CSV)</button>
             </div>
             <div class="card">
@@ -434,13 +430,15 @@
                     <thead>
                         <tr>
                             <th>員工姓名</th>
-                            <th>打卡總天數</th>
-                            <th>輸入當期日薪 ($)</th>
-                            <th>智能實領薪資結算總計</th>
+                            <th>打卡出勤天數</th>
+                            <th>設定當期日薪 ($)</th>
+                            <th>設定年資 (年)</th>
+                            <th>智能薪資結構細目拆解</th>
+                            <th>本月實領結算總計</th>
                         </tr>
                     </thead>
                     <tbody id="admin-payroll-tbody">
-                        <tr><td colspan="4">載入最新組織架構中...</td></tr>
+                        <tr><td colspan="6">載入最新組織架構中...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -485,7 +483,10 @@
     let currentUserProfile = null;
     let cachedClockRecords = [];
     let cachedUserList = [];
+    
+    // 初始化自訂日薪與年資物件
     let customDailyRates = {};
+    let customSeniorities = {};
 
     window.navTo = function(pageId) {
         document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
@@ -508,7 +509,6 @@
         select.innerHTML = '';
         
         const now = new Date();
-        // 帶入近6個月
         for (let i = 0; i < 6; i++) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const yyyy = d.getFullYear();
@@ -520,16 +520,15 @@
         }
     }
 
-    // 渲染個人薪資明細 (核心功能)
+    // 渲染個人薪資明細 (員工端看得到，維持不變)
     window.renderSalaryDetails = function() {
         const select = document.getElementById('salary-month-select');
         const box = document.getElementById('salary-details-box');
         if (!select || !box || !currentUserProfile) return;
 
-        const selectedMonthStr = select.value; // "YYYY-MM"
+        const selectedMonthStr = select.value; 
         document.getElementById('salary-month-title').innerText = `${selectedMonthStr} 月份薪資結算明細`;
 
-        // 規則驗證：取得當前的年、月、日
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth() + 1;
@@ -537,7 +536,6 @@
 
         const [selYear, selMonth] = selectedMonthStr.split('-').map(Number);
 
-        // 如果選擇的月份是「今年當月或未來的月份」，且目前日期還沒過 31 日，則隱藏不給看
         if ((selYear > currentYear) || (selYear === currentYear && selMonth >= currentMonth)) {
             if (currentDay < 31) {
                 box.innerHTML = `
@@ -549,14 +547,12 @@
             }
         }
 
-        // 通過驗證，開始計算該月出勤數據
         const myClocks = cachedClockRecords.filter(c => c.email === currentUserProfile.email && c.date.startsWith(selectedMonthStr) && (c.type === '上班' || c.type === '下班'));
         const daysCount = [...new Set(myClocks.map(c => c.date))].length;
         
         const baseSalary = currentUserProfile.baseSalary || 32000;
-        const dailyRateAddition = daysCount * 1500; // 假設每日津貼加給 1500
+        const dailyRateAddition = daysCount * 1500; 
 
-        // 模擬加薪與減薪明細項目（實際專案可從資料庫撈取，此處提供標準範本展示）
         let bonusAmount = 0;
         let penaltyAmount = 0;
         let bonusHtml = '';
@@ -573,7 +569,6 @@
             bonusHtml += `<div style="font-size:13px; color:#94a3b8; padding: 5px 0;">無任何加薪項目</div>`;
         }
 
-        // 減薪範案
         if (daysCount === 0) {
             penaltyAmount += 1000;
             penaltyHtml += `<div class="salary-row" style="color:#ef4444;"><span>➖ 本月未到工扣款</span><span>-$1,000</span></div>`;
@@ -710,7 +705,7 @@
 
     document.getElementById('btn-leave-submit').addEventListener('click', () => {
         if (!auth.currentUser) { alert('帳號未正常登入，請重新登入！'); return; }
-        if (!currentUserProfile) { alert('資料同步中，請稍候再試！'); return; }
+        if (!currentUserProfile) { alert('資料同步中', '請稍候再試！'); return; }
 
         const leaveType = document.getElementById('leave-type').value;
         const leaveDate = document.getElementById('leave-date').value;
@@ -833,12 +828,65 @@
         .then(() => alert(`單據已處置為：【${nextStatus}】`));
     };
 
+    // 👑 老闆控制台核心：連動變更自訂日薪與年資並重新計算
     window.updateLocalRate = function(uid, value) {
         customDailyRates[uid] = parseInt(value) || 0;
-        const days = parseInt(document.getElementById(`days-${uid}`).innerText) || 0;
-        document.getElementById(`total-${uid}`).innerText = `$${days * (customDailyRates[uid])}`;
+        recalculateSingleUserPayroll(uid);
     };
 
+    window.updateLocalSeniority = function(uid, value) {
+        customSeniorities[uid] = parseInt(value) || 0;
+        recalculateSingleUserPayroll(uid);
+    };
+
+    // 執行單一員工考勤與年資津貼邏輯運算
+    function recalculateSingleUserPayroll(uid) {
+        const days = parseInt(document.getElementById(`days-${uid}`).innerText) || 0;
+        const rate = customDailyRates[uid] || 0;
+        const seniority = customSeniorities[uid] || 0;
+
+        // 1. 計算基本出勤總額
+        const baseTotal = days * rate;
+
+        // 2. 智能判斷：根據不同的年資給予對應的久任考核津貼加給
+        let seniorityBonus = 0;
+        let seniorityLabel = "無年資加給";
+        if (seniority >= 1 && seniority <= 2) {
+            seniorityBonus = 1000;
+            seniorityLabel = "久任津貼 +$1,000";
+        } else if (seniority >= 3 && seniority <= 4) {
+            seniorityBonus = 2500;
+            seniorityLabel = "中階考核加給 +$2,500";
+        } else if (seniority >= 5) {
+            seniorityBonus = 5000;
+            seniorityLabel = "技術大師加給 +$5,000";
+        }
+
+        // 3. 智能判斷：若打卡出勤天數滿 20 天，自動發放全勤激勵金
+        let attendanceBonus = 0;
+        if (days >= 20) {
+            attendanceBonus = 2000;
+        }
+
+        const finalGrandTotal = baseTotal + seniorityBonus + attendanceBonus;
+
+        // 4. 即時更新畫面 DOM 細目
+        const detailBox = document.getElementById(`details-box-${uid}`);
+        if(detailBox) {
+            detailBox.innerHTML = `
+                <div class="payroll-detail-sub">⚙️ 日薪資小計: $${baseTotal.toLocaleString()}</div>
+                <div class="payroll-detail-sub">🏅 年資獎勵: ${seniorityLabel}</div>
+                <div class="payroll-detail-sub">🔥 全勤激勵: ${attendanceBonus > 0 ? '符合發放 +$2,000' : '未滿20天($0)'}</div>
+            `;
+        }
+
+        const totalCell = document.getElementById(`total-${uid}`);
+        if(totalCell) {
+            totalCell.innerText = `$${finalGrandTotal.toLocaleString()}`;
+        }
+    }
+
+    // 👑 老闆專屬功能：渲染智能薪資總結算表格
     window.triggerPayrollRender = function() {
         const searchKeyword = document.getElementById('payroll-search-input').value.trim().toLowerCase();
         const payrollTbody = document.getElementById('admin-payroll-tbody');
@@ -850,16 +898,41 @@
         }
 
         payrollTbody.innerHTML = filteredUsers.map(u => {
+            // 過濾並取得該同仁唯一的打卡天數
             const myClocks = cachedClockRecords.filter(c => c.uid === u.uid && (c.type === '上班' || c.type === '下班'));
             const daysCount = [...new Set(myClocks.map(c => c.date))].length;
+            
+            // 如果物件中還沒有預設值，給予初始值（預設日薪 1500，預設年資 0 年）
             if(!customDailyRates[u.uid]) customDailyRates[u.uid] = 1500;
+            if(!customSeniorities[u.uid]) customSeniorities[u.uid] = 0;
+
+            const currentRate = customDailyRates[u.uid];
+            const currentSeniority = customSeniorities[u.uid];
+
+            const baseTotal = daysCount * currentRate;
+            let seniorityBonus = 0;
+            let seniorityLabel = "無年資加給";
+            if (currentSeniority >= 1 && currentSeniority <= 2) { seniorityBonus = 1000; seniorityLabel = "久任津貼 +$1,000"; }
+            else if (currentSeniority >= 3 && currentSeniority <= 4) { seniorityBonus = 2500; seniorityLabel = "中階考核加給 +$2,500"; }
+            else if (currentSeniority >= 5) { seniorityBonus = 5000; seniorityLabel = "技術大師加給 +$5,000"; }
+
+            let attendanceBonus = daysCount >= 20 ? 2000 : 0;
+            const grandTotal = baseTotal + seniorityBonus + attendanceBonus;
 
             return `
                 <tr>
-                    <td><b>${u.name}</b></td>
-                    <td id="days-${u.uid}">${daysCount} 天</td>
-                    <td><input type="number" class="salary-input" value="${customDailyRates[u.uid]}" oninput="updateLocalRate('${u.uid}', this.value)"></td>
-                    <td style="font-weight:bold; color:#1e3a8a; font-size:15px;" id="total-${u.uid}">$${daysCount * customDailyRates[u.uid]}</td>
+                    <td><b>${u.name}</b><br><span style="font-size:11px; color:#94a3b8;">${u.email}</span></td>
+                    <td id="days-${u.uid}" style="font-weight:bold; color:#0f172a;">${daysCount} 天</td>
+                    <td><input type="number" class="salary-input" value="${currentRate}" oninput="updateLocalRate('${u.uid}', this.value)"></td>
+                    <td><input type="number" class="seniority-input" value="${currentSeniority}" min="0" max="40" oninput="updateLocalSeniority('${u.uid}', this.value)"> 年</td>
+                    <td>
+                        <div id="details-box-${u.uid}">
+                            <div class="payroll-detail-sub">⚙️ 日薪資小計: $${baseTotal.toLocaleString()}</div>
+                            <div class="payroll-detail-sub">🏅 年資獎勵: ${seniorityLabel}</div>
+                            <div class="payroll-detail-sub">🔥 全勤激勵: ${attendanceBonus > 0 ? '符合發放 +$2,000' : '未滿20天($0)'}</div>
+                        </div>
+                    </td>
+                    <td style="font-weight:bold; color:#0088cc; font-size:16px;" id="total-${u.uid}">$${grandTotal.toLocaleString()}</td>
                 </tr>
             `;
         }).join('');
@@ -889,7 +962,7 @@
             `).join('');
 
             renderUserHistory('all');
-            renderSalaryDetails(); // 差勤紀錄更新時，連動更新薪資
+            renderSalaryDetails(); 
 
             if(currentUserProfile.role === 'admin') {
                 document.getElementById('admin-full-tbody').innerHTML = list.map(i => `<tr><td>${i.name}</td><td>${i.type}</td><td>${i.date}</td><td>${i.time}</td><td>${i.note}</td></tr>`).join('');
@@ -917,24 +990,35 @@
                 document.getElementById('admin-schedule-tbody').innerHTML = cachedUserList.map(u => `<tr><td><b>${u.name}</b></td><td>早班</td><td>早班</td><td>早班</td><td>早班</td><td>早班</td><td><span style="color:#ef4444;">週休</span></td><td><span style="color:#ef4444;">週休</span></td></tr>`).join('');
                 triggerPayrollRender();
 
+                // 👑 升級版：CSV 數據同步導出年資與拆解結構
                 document.getElementById('btn-export-salary').onclick = () => {
-                    let csvContent = "data:text/csv;charset=utf-8,員工姓名,出勤天數,當期填寫日薪,實領結算總額\n";
+                    let csvContent = "data:text/csv;charset=utf-8,\uFEFF員工姓名,出勤天數,設定當期日薪,設定年資,全勤獎金,實領薪資結算總額\n";
                     cachedUserList.forEach(u => {
                         const days = [...new Set(cachedClockRecords.filter(c => c.uid === u.uid && (c.type === '上班' || c.type === '下班')).map(c => c.date))].length;
                         const rate = customDailyRates[u.uid] || 1500;
-                        csvContent += `${u.name},${days},${rate},${days * rate}\n`;
+                        const seniority = customSeniorities[u.uid] || 0;
+                        
+                        let seniorityBonus = 0;
+                        if (seniority >= 1 && seniority <= 2) seniorityBonus = 1000;
+                        else if (seniority >= 3 && seniority <= 4) seniorityBonus = 2500;
+                        else if (seniority >= 5) seniorityBonus = 5000;
+
+                        let attBonus = days >= 20 ? 2000 : 0;
+                        let finalTotal = (days * rate) + seniorityBonus + attBonus;
+
+                        csvContent += `${u.name},${days},${rate},${seniority}年,${attBonus},${finalTotal}\n`;
                     });
                     const encodedUri = encodeURI(csvContent);
                     const link = document.createElement("a");
                     link.setAttribute("href", encodedUri);
-                    link.setAttribute("download", `佑誠工程行_日薪自填報表_${new Date().toISOString().split('T')[0]}.csv`);
+                    link.setAttribute("download", `佑誠工程行_智能薪資結算年資綜合報表_${new Date().toISOString().split('T')[0]}.csv`);
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
                 };
             }
 
-            renderSalaryDetails(); // 員工檔案更新時，連動更新薪資
+            renderSalaryDetails(); 
         });
 
         onValue(ref(db, 'admin_requests'), (snapshot) => {
